@@ -1,14 +1,14 @@
 /**
  * ============================================================
- *  Earn Wallet — React Frontend (Modern Premium UI)
+ *  Earn Wallet — React Frontend (Modern Premium UI) — FIXED
  *  Language: Bengali (Bangla)
  *  API: https://www.gajarbotol.site/nirob/api.php
  * ============================================================
- *  Security:
- *   1. Telegram initData HMAC verification on every API call
- *   2. Server-side reward calculation (no client amounts)
- *   3. Balance only updated from server response
- *   4. Spam protection: buttons disabled until server response
+ *  FIXES:
+ *   1. Loader enhanced with more animations
+ *   2. Navigation async lock fixed (waits for API calls)
+ *   3. Method selector changed to card-based UI
+ *   4. Double-click spam protection on all buttons
  * ============================================================
  */
 
@@ -42,7 +42,7 @@ const ICONS = {
 };
 
 // ============================================================
-//  GLOBAL CSS — Premium Modern Design (with loader progress)
+//  GLOBAL CSS — Enhanced Premium Design
 // ============================================================
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -80,7 +80,7 @@ const css = `
   body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; overflow-x:hidden; }
   #root { max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:100px; position:relative; }
 
-  /* ===================== LOADER — Premium Lightning + Progress Bar ===================== */
+  /* ===================== LOADER — Ultra Premium Enhanced ===================== */
   .loader-overlay {
     position:fixed; inset:0; background:var(--bg); z-index:9999;
     display:flex; flex-direction:column;
@@ -89,27 +89,32 @@ const css = `
   }
   .loader-bg-glow {
     position:absolute; inset:0;
-    background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 60%);
-    animation: pulseGlow 2.5s ease-in-out infinite alternate;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.25) 0%, transparent 60%);
+    animation: pulseGlowEnhanced 2.5s ease-in-out infinite alternate;
   }
-  @keyframes pulseGlow {
-    0% { opacity:0.5; transform:scale(1); }
-    100% { opacity:1; transform:scale(1.2); }
+  @keyframes pulseGlowEnhanced {
+    0% { opacity:0.4; transform:scale(0.8); }
+    100% { opacity:1; transform:scale(1.3); }
   }
   .loader-lightning-container {
     position:relative; z-index:2;
     display:flex; align-items:center; justify-content:center;
   }
   .lightning-svg {
-    width:120px; height:120px;
-    filter: drop-shadow(0 0 40px rgba(124,58,237,0.8)) drop-shadow(0 0 80px rgba(79,142,247,0.4));
-    animation: lightningRotate 4s ease-in-out infinite alternate;
+    width:140px; height:140px;
+    filter: drop-shadow(0 0 40px rgba(124,58,237,0.8)) drop-shadow(0 0 80px rgba(79,142,247,0.5));
+    animation: lightningRotateEnhanced 3.5s ease-in-out infinite alternate, lightningPulse 2s ease-in-out infinite;
   }
-  @keyframes lightningRotate {
-    0% { transform: rotate(-5deg) scale(1); }
-    100% { transform: rotate(5deg) scale(1.08); }
+  @keyframes lightningRotateEnhanced {
+    0% { transform: rotate(-8deg) scale(0.95); }
+    100% { transform: rotate(8deg) scale(1.12); }
   }
-  /* Spark particles */
+  @keyframes lightningPulse {
+    0% { filter: drop-shadow(0 0 40px rgba(124,58,237,0.8)) drop-shadow(0 0 80px rgba(79,142,247,0.5)); }
+    50% { filter: drop-shadow(0 0 60px rgba(124,58,237,1)) drop-shadow(0 0 120px rgba(79,142,247,0.8)); }
+    100% { filter: drop-shadow(0 0 40px rgba(124,58,237,0.8)) drop-shadow(0 0 80px rgba(79,142,247,0.5)); }
+  }
+  /* Spark particles — more active */
   .spark {
     position:absolute; border-radius:50%;
     background: radial-gradient(circle, rgba(167,139,250,0.9), transparent 70%);
@@ -121,38 +126,45 @@ const css = `
   .spark4 { width:5px; height:5px; bottom:10px; left:-35px; animation-delay:1.5s; }
   .spark5 { width:7px; height:7px; top:-10px; left:-30px; animation-delay:0.3s; }
   @keyframes sparkFloat {
-    0% { transform:translate(0,0) scale(0.5); opacity:0.3; }
-    100% { transform:translate(15px,-20px) scale(1.5); opacity:1; }
+    0% { transform:translate(0,0) scale(0.3); opacity:0.1; }
+    100% { transform:translate(20px,-25px) scale(1.8); opacity:1; }
   }
 
-  /* Loader Progress Bar – New */
+  /* Loader Progress Bar */
   .loader-progress-wrap {
     position:relative; z-index:2;
-    margin-top:40px;
-    display:flex; flex-direction:column; align-items:center; gap:14px;
-    width:80%; max-width:260px;
+    margin-top:50px;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    width:85%; max-width:280px;
   }
   .loader-progress-bar {
-    width:100%; height:6px;
-    background:rgba(255,255,255,0.07);
+    width:100%; height:8px;
+    background:rgba(255,255,255,0.08);
     border-radius:10px;
     overflow:hidden;
-    box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);
+    box-shadow:inset 0 2px 4px rgba(0,0,0,0.6), 0 0 20px rgba(124,58,237,0.2);
+    border:1px solid rgba(124,58,237,0.15);
   }
   .loader-progress-fill {
     height:100%;
-    background:linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
+    background:linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c), var(--grad-a));
+    background-size:200% 100%;
     border-radius:10px;
-    transition:width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow:0 0 20px rgba(124,58,237,0.4);
+    transition:width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow:0 0 25px rgba(124,58,237,0.5), inset 0 1px 2px rgba(255,255,255,0.2);
     width:0%;
+    animation: gradientShift 2s linear infinite;
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
   }
   .loader-progress-text {
-    font-size:0.9rem; font-weight:600;
-    color:var(--text-mid); letter-spacing:0.5px;
+    font-size:0.95rem; font-weight:600;
+    color:var(--text-mid); letter-spacing:0.8px;
   }
   .loader-progress-text span {
-    color:#fff; font-weight:800;
+    color:#fff; font-weight:900; font-size:1.1rem;
   }
 
   /* ===================== TOAST ===================== */
@@ -448,6 +460,48 @@ const css = `
     50%{box-shadow:0 4px 22px rgba(16,185,129,0.6)}
   }
 
+  /* ===================== METHOD SELECTOR — Card-Based ===================== */
+  .method-selector-wrap {
+    margin-bottom:16px;
+  }
+  .method-label {
+    font-size:0.68rem; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:block;
+  }
+  .method-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .method-card {
+    background:var(--surface); border:2px solid var(--border);
+    border-radius:var(--radius-md); padding:16px 12px; text-align:center;
+    cursor:pointer; transition:0.2s; position:relative;
+    animation:fadeUp 0.5s ease both;
+  }
+  .method-card:hover {
+    border-color:rgba(124,58,237,0.3);
+    transform:translateY(-2px);
+    box-shadow:0 4px 16px rgba(124,58,237,0.1);
+  }
+  .method-card.active {
+    background:rgba(124,58,237,0.1);
+    border-color:var(--primary);
+    box-shadow:0 0 30px rgba(124,58,237,0.3);
+  }
+  .method-card:active { transform:scale(0.97); }
+  .method-card h5 { font-size:0.88rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .method-card p { font-size:0.7rem; color:var(--text-dim); }
+  .method-check {
+    position:absolute; top:8px; right:8px; width:18px; height:18px;
+    background:var(--primary); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:0.2s; transform:scale(0);
+  }
+  .method-card.active .method-check {
+    opacity:1; transform:scale(1);
+  }
+  .method-check::after {
+    content:'✓'; color:#fff; font-size:12px; font-weight:800;
+  }
+
   /* ===================== WITHDRAW ===================== */
   .info-banner {
     background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.18);
@@ -467,7 +521,6 @@ const css = `
   }
   .form-inp:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(124,58,237,0.1); }
   .form-inp::placeholder { color:var(--text-dim); opacity:0.8; }
-  select.form-inp { appearance:none; cursor:pointer; }
   .btn-submit {
     width:100%; padding:16px; border:none; border-radius:var(--radius-sm);
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
@@ -601,14 +654,13 @@ async function apiCall(action, method = 'GET', body = null) {
 }
 
 // ============================================================
-//  Loader — Premium Lightning + Progress Bar (No Text except progress)
+//  Loader — Ultra Premium with Enhanced Progress
 // ============================================================
 function Loader({ hiding, progress }) {
     return (
         <div className="loader-overlay" style={hiding ? { opacity: 0, transform: 'scale(1.05)' } : {}}>
             <div className="loader-bg-glow" />
             <div className="loader-lightning-container">
-                {/* Lightning bolt SVG */}
                 <svg className="lightning-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -642,7 +694,6 @@ function Loader({ hiding, progress }) {
                 <div className="spark spark5" />
             </div>
 
-            {/* Progress Bar */}
             <div className="loader-progress-wrap">
                 <div className="loader-progress-bar">
                     <div className="loader-progress-fill" style={{ width: `${Math.min(progress, 100)}%` }} />
@@ -712,7 +763,7 @@ function HomePage({ appState, onCopy, onShare }) {
                     <div className="stat-icon-wrap orange">
                         <img src={ICONS.coin} alt="" />
                     </div>
-                    <p>মোট আয়</p>
+                    <p>মোট আয়</p>
                     <h4>{(u.totalEarned || 0).toFixed(2)}</h4>
                 </div>
             </div>
@@ -738,7 +789,7 @@ function HomePage({ appState, onCopy, onShare }) {
                     </button>
                 </div>
                 <button className="btn-share" onClick={() => onShare(refLink)}>
-                    <img src={ICONS.rocket} alt="" /> টেলিগ্রামে শেয়ার করুন
+                    <img src={ICONS.rocket} alt="" /> টেলিগ্রামে শেয়ার করুন
                 </button>
             </div>
         </div>
@@ -772,7 +823,7 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
     return (
         <div className="page active">
             <div className="sec-head">
-                <img src={ICONS.tv} alt="" /> বিজ্ঞাপন দেখুন ও আয় করুন
+                <img src={ICONS.tv} alt="" /> বিজ্ঞাপন দেখুন ও আয় করুন
             </div>
             {slots.length === 0 ? (
                 <div className="empty-state">
@@ -818,30 +869,32 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
     const lockRef = useRef(false);
 
     async function triggerAd() {
-        if (loading || lockRef.current || done >= limit) return;
-        lockRef.current = true;
-        setLoading(true);
-        tg.HapticFeedback.impactOccurred('light');
-        try {
-            let providerFunc;
-            if (slot.network === 'monetag' && window[`show_${slot.id}`]) {
-                providerFunc = window[`show_${slot.id}`]();
-            } else if (slot.network === 'gigapub' && window.showGiga) {
-                providerFunc = window.showGiga();
-            } else {
-                alert('বিজ্ঞাপন নেটওয়ার্ক লোড হচ্ছে। আবার চেষ্টা করুন।');
+        if (lockRef.current || done >= limit) return;
+        if (!lockRef.current) {
+            lockRef.current = true;
+            setLoading(true);
+            tg.HapticFeedback.impactOccurred('light');
+            try {
+                let providerFunc;
+                if (slot.network === 'monetag' && window[`show_${slot.id}`]) {
+                    providerFunc = window[`show_${slot.id}`]();
+                } else if (slot.network === 'gigapub' && window.showGiga) {
+                    providerFunc = window.showGiga();
+                } else {
+                    alert('বিজ্ঞাপন নেটওয়ার্ক লোড হচ্ছে। আবার চেষ্টা করুন।');
+                    setLoading(false);
+                    lockRef.current = false;
+                    return;
+                }
+                await providerFunc;
+                await onAdDone(slot.id);
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch {
+                // user cancelled
+            } finally {
                 setLoading(false);
                 lockRef.current = false;
-                return;
             }
-            await providerFunc;
-            await onAdDone(slot.id);
-            tg.HapticFeedback.notificationOccurred('success');
-        } catch {
-            // user cancelled
-        } finally {
-            setLoading(false);
-            lockRef.current = false;
         }
     }
 
@@ -944,7 +997,7 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
 }
 
 // ============================================================
-//  Withdraw Page
+//  Withdraw Page — With Card-Based Method Selector
 // ============================================================
 function WithdrawPage({ appState, onWithdraw }) {
     const cfg    = appState.config;
@@ -953,7 +1006,7 @@ function WithdrawPage({ appState, onWithdraw }) {
     const methods = cfg.withdrawMethods || [];
     const minRef  = cfg.minWithdrawReferrals || 0;
 
-    const [method,     setMethod]     = useState('');
+    const [method,     setMethod]     = useState(methods.length > 0 ? methods[0].name : '');
     const [account,    setAccount]    = useState('');
     const [amount,     setAmount]     = useState('');
     const [processing, setProcessing] = useState(false);
@@ -976,29 +1029,38 @@ function WithdrawPage({ appState, onWithdraw }) {
 
     async function handleSubmit() {
         if (processing || lockRef.current) return;
-        if (u.referrals < minRef) {
-            showToastGlobal('warning', `উত্তোলনের জন্য ন্যূনতম ${minRef} রেফারেল প্রয়োজন।`);
-            tg.HapticFeedback.notificationOccurred('warning');
-            return;
+        if (!lockRef.current) {
+            lockRef.current = true;
+            if (u.referrals < minRef) {
+                showToastGlobal('warning', `উত্তোলনের জন্য ন্যূনতম ${minRef} রেফারেল প্রয়োজন।`);
+                tg.HapticFeedback.notificationOccurred('warning');
+                lockRef.current = false;
+                return;
+            }
+            const reqAmt = parseFloat(amount);
+            if (!account || account.trim().length < 3) {
+                showToastGlobal('error', 'একটি বৈধ অ্যাকাউন্ট নম্বর দিন.');
+                lockRef.current = false;
+                return;
+            }
+            if (!reqAmt || isNaN(reqAmt) || reqAmt < sysMin) {
+                showToastGlobal('error', `ন্যূনতম উত্তোলন ${sysMin} ${sym}।`);
+                tg.HapticFeedback.notificationOccurred('error');
+                lockRef.current = false;
+                return;
+            }
+            if (reqAmt > u.balance) {
+                showToastGlobal('error', 'পর্যাপ্ত ব্যালেন্স নেই।');
+                tg.HapticFeedback.notificationOccurred('error');
+                lockRef.current = false;
+                return;
+            }
+            setProcessing(true);
+            const ok = await onWithdraw({ userId: u.id, userName: u.firstName, amount: reqAmt, method: method || selectedMethod?.name, account: account.trim() });
+            setProcessing(false);
+            lockRef.current = false;
+            if (ok) { setAmount(''); setAccount(''); }
         }
-        const reqAmt = parseFloat(amount);
-        if (!account || account.trim().length < 3) {
-            showToastGlobal('error', 'একটি বৈধ অ্যাকাউন্ট নম্বর দিন।'); return;
-        }
-        if (!reqAmt || isNaN(reqAmt) || reqAmt < sysMin) {
-            showToastGlobal('error', `ন্যূনতম উত্তোলন ${sysMin} ${sym}।`);
-            tg.HapticFeedback.notificationOccurred('error'); return;
-        }
-        if (reqAmt > u.balance) {
-            showToastGlobal('error', 'পর্যাপ্ত ব্যালেন্স নেই।');
-            tg.HapticFeedback.notificationOccurred('error'); return;
-        }
-        lockRef.current = true;
-        setProcessing(true);
-        const ok = await onWithdraw({ userId: u.id, userName: u.firstName, amount: reqAmt, method: method || selectedMethod?.name, account: account.trim() });
-        setProcessing(false);
-        lockRef.current = false;
-        if (ok) { setAmount(''); setAccount(''); }
     }
 
     return (
@@ -1015,15 +1077,27 @@ function WithdrawPage({ appState, onWithdraw }) {
                     </p>
                 </div>
             </div>
-            <div className="input-wrap">
-                <img className="input-icon" src={ICONS.coin} alt="" />
-                <select className="form-inp" value={method} onChange={e => setMethod(e.target.value)}>
-                    {methods.length === 0 && <option value="">কোন পদ্ধতি নেই</option>}
-                    {methods.map(m => (
-                        <option key={m.name} value={m.name}>{m.name} (ন্যূনতম {m.min})</option>
-                    ))}
-                </select>
-            </div>
+
+            {/* Card-Based Method Selector */}
+            {methods.length > 0 && (
+                <div className="method-selector-wrap">
+                    <span className="method-label">পেমেন্ট পদ্ধতি নির্বাচন করুন</span>
+                    <div className="method-grid">
+                        {methods.map(m => (
+                            <div
+                                key={m.name}
+                                className={`method-card ${method === m.name ? 'active' : ''}`}
+                                onClick={() => setMethod(m.name)}
+                            >
+                                <h5>{m.name}</h5>
+                                <p>ন্যূনতম {m.min}</p>
+                                <div className="method-check" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.share} alt="" />
                 <input className="form-inp" placeholder="অ্যাকাউন্ট নম্বর / ট্যাগ" value={account} onChange={e => setAccount(e.target.value)} />
@@ -1034,7 +1108,7 @@ function WithdrawPage({ appState, onWithdraw }) {
             </div>
             <button className="btn-submit" onClick={handleSubmit} disabled={processing || lockRef.current}>
                 {processing
-                    ? <><img src={ICONS.clock} alt="" /> প্রক্রিয়াকরণ...</>
+                    ? <><img src={ICONS.clock} alt="" /> প্রক্রিয়াকরণ...</>
                     : <><img src={ICONS.withdraw} alt="" /> উত্তোলন অনুরোধ</>
                 }
             </button>
@@ -1205,9 +1279,9 @@ export default function App() {
         adLock.current = true;
         const today = new Date().toISOString().slice(0, 10);
         const res = await apiCall('claimAdReward', 'POST', { slotId });
+        adLock.current = false;
         if (!res || res.error) {
             showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
-            adLock.current = false;
             return;
         }
         const rwrd = res.reward;
@@ -1229,7 +1303,6 @@ export default function App() {
             return next;
         });
         showToast('success', `+${rwrd} ${appState.config.currencySymbol || 'টাকা'} পুরস্কার!`);
-        adLock.current = false;
     }
 
     // ===== TASK REWARD =====
@@ -1238,9 +1311,9 @@ export default function App() {
         if (taskLock.current) return;
         taskLock.current = true;
         const res = await apiCall('claimTaskReward', 'POST', { taskId: id });
+        taskLock.current = false;
         if (!res || res.error) {
             showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
-            taskLock.current = false;
             return;
         }
         const rwrd = res.reward;
@@ -1260,7 +1333,6 @@ export default function App() {
         });
         showToast('success', 'টাস্ক সম্পন্ন! পুরস্কার যোগ হয়েছে।');
         tg.HapticFeedback.notificationOccurred('success');
-        taskLock.current = false;
     }
 
     // ===== WITHDRAW =====
@@ -1309,18 +1381,21 @@ export default function App() {
         else showToast('warning', 'সাপোর্ট লিংক কনফিগার করা নেই।');
     }
 
+    // ===== FIXED NAVIGATION WITH ASYNC LOCK =====
     async function handleNav(page) {
         if (navLock.current) return;
         navLock.current = true;
         setActivePage(page);
         try { tg.HapticFeedback.impactOccurred('light'); } catch {}
+        
         if (page === 'withdraw') {
             const data = await apiCall('getHistory', 'POST', { id: appState.user.id });
             if (data) {
                 setAppState(prev => { const n = { ...prev, history: data }; saveLocal(n); return n; });
             }
         }
-        setTimeout(() => { navLock.current = false; }, 300);
+        
+        setTimeout(() => { navLock.current = false; }, 400);
     }
 
     const u   = appState.user;
@@ -1370,7 +1445,7 @@ export default function App() {
                             </div>
                             <div className="bc-footer">
                                 <div className="bc-mini">
-                                    <span>মোট আয়</span>
+                                    <span>মোট আয়</span>
                                     <span>{(u.totalEarned || 0).toFixed(2)}</span>
                                 </div>
                                 <div className="bc-mini">
@@ -1396,7 +1471,7 @@ export default function App() {
                     <nav className="bottom-nav" aria-label="প্রধান নেভিগেশন">
                         {[
                             { page:'home',     icon:ICONS.home,     label:'হোম' },
-                            { page:'earn',     icon:ICONS.earn,     label:'আয়' },
+                            { page:'earn',     icon:ICONS.earn,     label:'আয়' },
                             { page:'withdraw', icon:ICONS.withdraw, label:'উত্তোলন' },
                         ].map(({ page, icon, label }) => (
                             <div
