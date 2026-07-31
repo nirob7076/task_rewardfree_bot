@@ -1,6 +1,6 @@
 /**
  * ============================================================
- *  Earn Wallet — React Frontend (Modern UI) — BENGALI VERSION
+ *  Earn Wallet — React Frontend  (Modern UI)
  * ============================================================
  *  Security:
  *   1. Telegram initData HMAC verification on every API call
@@ -14,10 +14,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ============================================================
 //  CONFIG
 // ============================================================
-const API_URL = "https://yoursite.com/api.php"; // Replace with your api.php URL
+const API_URL = "https://www.gajarbotol.site/nirob/api.php"; // Replace with your api.php URL
 
 // ============================================================
-//  3D Twemoji icon URLs — high quality
+//  3D Twemoji icon URLs — high quality, no emojis in nav
 // ============================================================
 const ICONS = {
   home:     "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3e0.png",
@@ -42,19 +42,19 @@ const ICONS = {
 //  GLOBAL CSS
 // ============================================================
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
   :root {
-    --bg: #05050f;
-    --surface: #0c0c1a;
-    --surface2: #14142a;
-    --surface3: #1a1a38;
+    --bg: #06060f;
+    --surface: #0e0e1c;
+    --surface2: #15152a;
+    --surface3: #1c1c34;
     --text: #f0f0fa;
-    --text-dim: #6a6a96;
-    --text-mid: #9494c0;
-    --border: #1c1c3a;
-    --border2: #26264a;
-    --primary: #7c3aed;
+    --text-dim: #6e6e98;
+    --text-mid: #9898c0;
+    --border: #1e1e38;
+    --border2: #28284a;
+    --primary: #6c5ce7;
     --primary2: #a78bfa;
     --primary3: #c4b5fd;
     --blue: #4f8ef7;
@@ -62,14 +62,12 @@ const css = `
     --green: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
-    --grad-a: #7c3aed;
-    --grad-b: #4f8ef7;
+    --grad-a: #4f8ef7;
+    --grad-b: #7c3aed;
     --grad-c: #a78bfa;
-    --radius-lg: 24px;
+    --radius-lg: 22px;
     --radius-md: 16px;
     --radius-sm: 12px;
-    --glow-purple: 0 0 40px rgba(124,58,237,0.3);
-    --glow-purple-strong: 0 0 60px rgba(124,58,237,0.5);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -77,84 +75,106 @@ const css = `
   body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; overflow-x:hidden; }
   #root { max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:100px; position:relative; }
 
-  /* ===================== LOADER — Lightning Theme ===================== */
+  /* ===================== LOADER ===================== */
   .loader-overlay {
     position:fixed; inset:0; background:var(--bg); z-index:9999;
     display:flex; justify-content:center; align-items:center; flex-direction:column;
     overflow:hidden; transition:opacity 0.55s ease, transform 0.55s ease;
   }
-  /* Dark mesh background with purple/blue hints */
+  /* Animated mesh gradient background */
   .loader-mesh {
     position:absolute; inset:0; z-index:0;
-    background: radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.15) 0%, transparent 55%),
-                radial-gradient(ellipse at 70% 80%, rgba(79,142,247,0.10) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.05) 0%, transparent 40%);
-    animation: meshPulse 6s ease-in-out infinite alternate;
+    background: radial-gradient(ellipse at 20% 30%, rgba(108,92,231,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(79,142,247,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 90%, rgba(6,182,212,0.08) 0%, transparent 50%);
+    animation: meshShift 8s ease-in-out infinite alternate;
   }
-  @keyframes meshPulse {
-    0% { opacity:0.6; transform:scale(1); }
-    100% { opacity:1; transform:scale(1.05); }
+  @keyframes meshShift {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(30deg); }
   }
-  /* Lightning bolt container */
-  .loader-lightning-wrap {
+  /* Floating particles */
+  .loader-particle {
+    position:absolute; border-radius:50%; pointer-events:none;
+    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    opacity:0.08; filter:blur(40px);
+    animation: particleFloat 8s ease-in-out infinite;
+  }
+  .lp1 { width:300px;height:300px; top:-80px; left:-80px; animation-duration:7s; }
+  .lp2 { width:250px;height:250px; bottom:-60px; right:-60px; animation-delay:2s; animation-duration:9s; }
+  .lp3 { width:180px;height:180px; top:40%; right:5%; opacity:0.06; animation-delay:4s; animation-duration:6s; }
+  @keyframes particleFloat {
+    0%,100% { transform:translate(0,0) scale(1); }
+    33% { transform:translate(20px,-15px) scale(1.08); }
+    66% { transform:translate(-12px,18px) scale(0.96); }
+  }
+  .loader-inner {
     position:relative; z-index:2; display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
+    align-items:center; gap:32px;
   }
-  /* Glow rings around lightning */
-  .lightning-ring {
-    position:absolute; border-radius:50%;
-    border:1.5px solid rgba(124,58,237,0.08);
-    animation: ringExpand 3s ease-out infinite;
+  /* Spinner rings */
+  .loader-rings { position:relative; width:96px; height:96px; }
+  .lr-ring {
+    position:absolute; inset:0; border-radius:50%;
+    border:2.5px solid transparent;
+    animation:ringSpinA 1.4s linear infinite;
   }
-  .lr1 { width:160px; height:160px; animation-delay:0s; }
-  .lr2 { width:200px; height:200px; animation-delay:0.6s; }
-  .lr3 { width:240px; height:240px; animation-delay:1.2s; }
-  @keyframes ringExpand {
-    0% { transform:scale(0.6); opacity:0.5; }
-    100% { transform:scale(1.4); opacity:0; }
+  .lr-ring-1 { border-top-color:var(--blue); border-right-color:rgba(79,142,247,0.2); }
+  .lr-ring-2 {
+    inset:10px; border:2px solid transparent;
+    border-bottom-color:var(--primary2); border-left-color:rgba(167,139,250,0.2);
+    animation:ringSpinB 2s linear infinite;
   }
-  /* Lightning bolt icon with glow */
-  .lightning-icon {
-    position:relative; z-index:3; width:80px; height:80px;
-    filter: drop-shadow(0 0 30px rgba(124,58,237,0.6)) drop-shadow(0 0 60px rgba(79,142,247,0.3));
-    animation: lightningPulse 1.8s ease-in-out infinite alternate;
+  .lr-ring-3 {
+    inset:22px; border:2px solid transparent;
+    border-top-color:var(--cyan); border-right-color:rgba(6,182,212,0.2);
+    animation:ringSpinA 1s linear infinite reverse;
   }
-  .lightning-icon img {
-    width:100%; height:100%; object-fit:contain;
-    filter: brightness(1.2) saturate(1.3);
+  @keyframes ringSpinA { to { transform: rotate(360deg); } }
+  @keyframes ringSpinB { to { transform: rotate(-360deg); } }
+  .lr-center {
+    position:absolute; inset:32px; border-radius:50%;
+    background: linear-gradient(135deg, var(--primary), var(--blue));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 0 20px rgba(108,92,231,0.4);
+    animation: centerPulse 2s ease-in-out infinite;
   }
-  @keyframes lightningPulse {
-    0% { transform:scale(1) rotate(-2deg); filter: drop-shadow(0 0 30px rgba(124,58,237,0.4)); }
-    100% { transform:scale(1.12) rotate(2deg); filter: drop-shadow(0 0 60px rgba(124,58,237,0.8)) drop-shadow(0 0 100px rgba(79,142,247,0.4)); }
+  .lr-center img { width:22px; height:22px; filter: brightness(10); }
+  @keyframes centerPulse {
+    0%,100% { box-shadow: 0 0 20px rgba(108,92,231,0.4); transform:scale(1); }
+    50% { box-shadow: 0 0 32px rgba(108,92,231,0.7); transform:scale(1.08); }
   }
-  /* Lightning bolt sparkle particles */
-  .sparkle {
-    position:absolute; border-radius:50%; pointer-events:none;
-    background: radial-gradient(circle, rgba(167,139,250,0.8), transparent 70%);
-    animation: sparkleFade 1.2s ease-in-out infinite alternate;
+  /* Brand name */
+  .loader-brand {
+    font-size:1.8rem; font-weight:800; letter-spacing:-1px;
+    background: linear-gradient(135deg, var(--blue), var(--primary2), var(--cyan));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-size:200%; animation:brandShimmer 3s linear infinite;
   }
-  .sp1 { width:6px; height:6px; top:-20px; right:-10px; animation-delay:0.2s; }
-  .sp2 { width:4px; height:4px; bottom:-15px; left:-8px; animation-delay:0.6s; }
-  .sp3 { width:5px; height:5px; top:10px; right:-25px; animation-delay:1.0s; }
-  .sp4 { width:3px; height:3px; bottom:5px; left:-20px; animation-delay:0.4s; }
-  @keyframes sparkleFade {
-    0% { opacity:0; transform:scale(0.5); }
-    100% { opacity:1; transform:scale(1.8); }
+  @keyframes brandShimmer {
+    0% { background-position:0% 50%; }
+    100% { background-position:200% 50%; }
   }
-  /* Tiny bolt particles floating around */
-  .bolt-particle {
-    position:absolute; border-radius:50%; pointer-events:none;
-    background: rgba(167,139,250,0.15); filter:blur(4px);
-    animation: boltFloat 4s ease-in-out infinite;
+  /* Progress bar */
+  .loader-progress-wrap { width:220px; display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .loader-bar-track {
+    width:100%; height:3px; background:var(--surface2); border-radius:10px; overflow:hidden;
   }
-  .bp1 { width:80px; height:80px; top:-60px; right:-50px; animation-delay:0s; }
-  .bp2 { width:60px; height:60px; bottom:-40px; left:-40px; animation-delay:1.5s; }
-  .bp3 { width:50px; height:50px; top:30%; right:-30px; animation-delay:3s; }
-  @keyframes boltFloat {
-    0%,100% { transform:translate(0,0) scale(1); opacity:0.3; }
-    50% { transform:translate(15px,-20px) scale(1.3); opacity:0.6; }
+  .loader-bar-fill {
+    height:100%; width:0%;
+    background: linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
+    border-radius:10px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1);
+    background-size:200%; animation:barShimmer 1.5s linear infinite;
   }
-  /* No text on loader — hidden */
+  @keyframes barShimmer { 0%{background-position:100%} 100%{background-position:-100%} }
+  .loader-pct { font-size:11px; font-weight:700; color:var(--primary2); letter-spacing:0.5px; }
+  /* Dots */
+  .loader-dots { display:flex; gap:7px; }
+  .ld-dot { width:5px; height:5px; border-radius:50%; background:var(--border2); }
+  .ld-dot:nth-child(1){animation:dotAnim 1.4s ease-in-out infinite 0s}
+  .ld-dot:nth-child(2){animation:dotAnim 1.4s ease-in-out infinite 0.2s}
+  .ld-dot:nth-child(3){animation:dotAnim 1.4s ease-in-out infinite 0.4s}
+  @keyframes dotAnim { 0%,80%,100%{transform:scale(0.6);opacity:0.3} 40%{transform:scale(1);opacity:1;background:var(--primary2)} }
 
   /* ===================== TOAST ===================== */
   .toast {
@@ -166,7 +186,6 @@ const css = `
     display:flex; align-items:center; gap:9px;
     z-index:10000; transition:top 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
     max-width:88%; white-space:nowrap; pointer-events:none;
-    font-family:'Inter',sans-serif;
   }
   .toast.show { top:20px; }
   .toast-icon { width:18px; height:18px; flex-shrink:0; }
@@ -182,11 +201,7 @@ const css = `
   .user-avatar img {
     width:44px; height:44px; border-radius:50%;
     border:2px solid var(--primary); object-fit:cover;
-    box-shadow:0 0 0 3px rgba(124,58,237,0.2), 0 0 20px rgba(124,58,237,0.1);
-    transition:box-shadow 0.3s;
-  }
-  .user-avatar img:hover {
-    box-shadow:0 0 0 4px rgba(124,58,237,0.3), 0 0 30px rgba(124,58,237,0.2);
+    box-shadow:0 0 0 3px rgba(108,92,231,0.15);
   }
   .avatar-status {
     position:absolute; bottom:1px; right:1px; width:12px; height:12px;
@@ -197,14 +212,8 @@ const css = `
     0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)}
     50%{box-shadow:0 0 0 4px rgba(16,185,129,0)}
   }
-  .user-info h3 {
-    font-size:0.95rem; font-weight:700; color:var(--text);
-    font-family:'Inter',sans-serif;
-  }
-  .user-info p {
-    font-size:0.7rem; color:var(--text-dim); margin-top:1px;
-    font-family:'Inter',sans-serif;
-  }
+  .user-info h3 { font-size:0.95rem; font-weight:700; color:var(--text); }
+  .user-info p { font-size:0.7rem; color:var(--text-dim); margin-top:1px; }
   .notif-btn {
     width:40px; height:40px; background:var(--surface2); border:1px solid var(--border2);
     border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -221,109 +230,77 @@ const css = `
   .page { display:none; padding:0 16px; }
   .page.active {
     display:block;
-    animation:pageSlideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation:pageSlideIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
   }
   @keyframes pageSlideIn {
-    from { opacity:0; transform:translateY(24px) scale(0.96); }
+    from { opacity:0; transform:translateY(20px) scale(0.97); }
     to   { opacity:1; transform:translateY(0) scale(1); }
   }
 
-  /* ===================== BALANCE CARD — Purple Glow ===================== */
+  /* ===================== BALANCE CARD ===================== */
   .balance-card {
     margin: 0 16px 20px;
-    background: linear-gradient(145deg, #0d0d2b 0%, #1a0a3a 30%, #0a1a3a 70%, #0d0d2b 100%);
-    border:1px solid rgba(124,58,237,0.35);
+    background: linear-gradient(135deg, #1a1040 0%, #0d1a40 50%, #0a2040 100%);
+    border:1px solid rgba(108,92,231,0.25);
     border-radius:var(--radius-lg); padding:28px 24px 24px;
     position:relative; overflow:hidden;
-    box-shadow: var(--glow-purple), 0 0 0 1px rgba(124,58,237,0.08) inset;
-    animation: cardGlowIn 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
-    transition:box-shadow 0.5s;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    animation: cardIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
   }
-  .balance-card:hover {
-    box-shadow: var(--glow-purple-strong), 0 0 0 1px rgba(124,58,237,0.15) inset;
-  }
-  @keyframes cardGlowIn {
-    from { transform:scale(0.88) translateY(20px); opacity:0; box-shadow:0 0 0 rgba(124,58,237,0); }
-    to   { transform:scale(1) translateY(0); opacity:1; box-shadow:var(--glow-purple); }
+  @keyframes cardIn {
+    from { transform:scale(0.9) translateY(16px); opacity:0; }
+    to   { transform:scale(1) translateY(0); opacity:1; }
   }
   .bc-glow {
     position:absolute; inset:0; pointer-events:none;
-    background: radial-gradient(ellipse at 20% 10%, rgba(124,58,237,0.20) 0%, transparent 55%),
-                radial-gradient(ellipse at 80% 90%, rgba(79,142,247,0.12) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.05) 0%, transparent 40%);
-    animation: glowDrift 6s ease-in-out infinite alternate;
-  }
-  @keyframes glowDrift {
-    0% { opacity:0.6; transform:scale(1) rotate(0deg); }
-    100% { opacity:1; transform:scale(1.05) rotate(2deg); }
+    background: radial-gradient(ellipse at 0% 0%, rgba(79,142,247,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 100% 100%, rgba(108,92,231,0.12) 0%, transparent 60%);
   }
   .bc-grid {
     position:absolute; inset:0; pointer-events:none;
-    background-image: linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
-    background-size: 30px 30px;
-    opacity:0.5;
+    background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
   .bc-label {
-    font-size:0.68rem; text-transform:uppercase; letter-spacing:2.5px;
-    color:rgba(167,139,250,0.6); font-weight:700; margin-bottom:10px;
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:2px;
+    color:rgba(255,255,255,0.45); font-weight:600; margin-bottom:10px;
     position:relative; z-index:1;
-    font-family:'Inter',sans-serif;
   }
   .bc-amount {
     font-size:3rem; font-weight:800; color:#fff; letter-spacing:-2px; line-height:1;
     position:relative; z-index:1;
-    text-shadow:0 0 40px rgba(124,58,237,0.15);
-    font-family:'Inter',sans-serif;
   }
   .bc-sym { font-size:1.3rem; font-weight:600; opacity:0.7; letter-spacing:0; }
   .bc-footer {
     display:flex; gap:20px; margin-top:22px; position:relative; z-index:1;
-    padding-top:16px; border-top:1px solid rgba(124,58,237,0.15);
+    padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);
   }
-  .bc-mini span:first-child {
-    font-size:0.65rem; color:rgba(167,139,250,0.5); font-weight:600; display:block;
-    font-family:'Inter',sans-serif;
-  }
-  .bc-mini span:last-child {
-    font-size:0.95rem; color:#fff; font-weight:700;
-    font-family:'Inter',sans-serif;
-  }
+  .bc-mini span:first-child { font-size:0.65rem; color:rgba(255,255,255,0.45); font-weight:500; display:block; }
+  .bc-mini span:last-child { font-size:0.95rem; color:#fff; font-weight:700; }
 
-  /* ===================== SECTION HEADING — Bangla ===================== */
+  /* ===================== SECTION HEADING ===================== */
   .sec-head {
-    font-size:0.9rem; font-weight:700; margin:24px 0 14px;
+    font-size:0.85rem; font-weight:700; margin:24px 0 14px;
     display:flex; align-items:center; gap:8px; color:var(--text);
-    text-transform:uppercase; letter-spacing:0.5px;
-    font-family:'Inter',sans-serif;
+    text-transform:uppercase; letter-spacing:0.8px;
   }
   .sec-head img { width:18px; height:18px; }
 
-  /* ===================== STATS GRID — Jumping Cards ===================== */
+  /* ===================== STATS GRID ===================== */
   .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
   .stat-card {
     background:var(--surface); border:1px solid var(--border);
     border-radius:var(--radius-md); padding:16px 14px;
-    transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s, box-shadow 0.3s;
-    animation: cardJump 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
-    cursor:default;
+    transition:transform 0.2s, border-color 0.2s;
+    animation:fadeUp 0.5s ease both;
   }
-  .stat-card:nth-child(1){ animation-delay:0.04s; }
-  .stat-card:nth-child(2){ animation-delay:0.10s; }
-  .stat-card:nth-child(3){ animation-delay:0.16s; }
-  .stat-card:nth-child(4){ animation-delay:0.22s; }
-  @keyframes cardJump {
-    0% { opacity:0; transform:translateY(30px) scale(0.92) rotate(-1deg); }
-    30% { transform:translateY(-8px) scale(1.02) rotate(0.5deg); }
-    60% { transform:translateY(4px) scale(0.99) rotate(-0.2deg); }
-    100% { opacity:1; transform:translateY(0) scale(1) rotate(0deg); }
-  }
-  .stat-card:hover {
-    transform:translateY(-4px) scale(1.01);
-    border-color:rgba(124,58,237,0.3);
-    box-shadow:0 8px 24px rgba(124,58,237,0.08);
-  }
-  .stat-card:active { transform:scale(0.97) translateY(0); }
+  .stat-card:nth-child(1){animation-delay:0.04s}
+  .stat-card:nth-child(2){animation-delay:0.08s}
+  .stat-card:nth-child(3){animation-delay:0.12s}
+  .stat-card:nth-child(4){animation-delay:0.16s}
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .stat-card:active { transform:scale(0.97); }
   .stat-icon-wrap {
     width:36px; height:36px; border-radius:11px;
     display:flex; align-items:center; justify-content:center;
@@ -331,17 +308,11 @@ const css = `
   }
   .stat-icon-wrap img { width:22px; height:22px; }
   .stat-icon-wrap.blue { background:rgba(79,142,247,0.12); }
-  .stat-icon-wrap.purple { background:rgba(124,58,237,0.12); }
+  .stat-icon-wrap.purple { background:rgba(108,92,231,0.12); }
   .stat-icon-wrap.green { background:rgba(16,185,129,0.12); }
   .stat-icon-wrap.orange { background:rgba(245,158,11,0.12); }
-  .stat-card p {
-    font-size:0.7rem; color:var(--text-dim); font-weight:500; margin-bottom:5px;
-    font-family:'Inter',sans-serif;
-  }
-  .stat-card h4 {
-    font-size:1.4rem; font-weight:800; letter-spacing:-0.5px; color:var(--text);
-    font-family:'Inter',sans-serif;
-  }
+  .stat-card p { font-size:0.7rem; color:var(--text-dim); font-weight:500; margin-bottom:5px; }
+  .stat-card h4 { font-size:1.4rem; font-weight:800; letter-spacing:-0.5px; color:var(--text); }
 
   /* ===================== REFERRAL CARD ===================== */
   .ref-card {
@@ -350,46 +321,38 @@ const css = `
     margin-bottom:18px; position:relative; overflow:hidden;
   }
   .ref-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2.5px;
-    background: linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
   }
   .ref-top { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
   .ref-icon {
     width:44px; height:44px; border-radius:14px;
-    background:rgba(124,58,237,0.14); border:1px solid rgba(124,58,237,0.2);
+    background:rgba(108,92,231,0.14); border:1px solid rgba(108,92,231,0.2);
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .ref-icon img { width:24px; height:24px; }
-  .ref-title h4 {
-    font-size:0.95rem; font-weight:700;
-    font-family:'Inter',sans-serif;
-  }
+  .ref-title h4 { font-size:0.95rem; font-weight:700; }
   .ref-badge {
     display:inline-flex; align-items:center; gap:4px;
     background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25);
     color:var(--green); padding:3px 10px; border-radius:20px;
     font-size:0.7rem; font-weight:700; margin-top:4px;
     animation:badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both 0.3s;
-    font-family:'Inter',sans-serif;
   }
   @keyframes badgePop { from{transform:scale(0)} to{transform:scale(1)} }
   .ref-badge img { width:12px; height:12px; }
-  .ref-label {
-    font-size:0.68rem; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;
-    font-family:'Inter',sans-serif;
-  }
+  .ref-label { font-size:0.68rem; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
   .ref-input-row {
     display:flex; background:var(--surface2); border:1px solid var(--border2);
     border-radius:var(--radius-sm); padding:5px 5px 5px 14px; margin-bottom:12px; align-items:center;
   }
-  .ref-inp { flex:1; background:transparent; border:none; color:var(--text-mid); font-size:0.8rem; font-weight:500; outline:none; min-width:0; font-family:'Inter',sans-serif; }
+  .ref-inp { flex:1; background:transparent; border:none; color:var(--text-mid); font-size:0.8rem; font-weight:500; outline:none; min-width:0; }
   .btn-copy {
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; border:none; padding:9px 15px; border-radius:9px;
     font-size:0.8rem; font-weight:600; cursor:pointer;
     display:flex; align-items:center; gap:6px; transition:0.2s; flex-shrink:0;
-    box-shadow:0 3px 12px rgba(124,58,237,0.25);
-    font-family:'Inter',sans-serif;
+    box-shadow:0 3px 12px rgba(79,142,247,0.25);
   }
   .btn-copy img { width:14px; height:14px; filter:brightness(10); }
   .btn-copy:active { transform:scale(0.93); opacity:0.85; }
@@ -398,8 +361,7 @@ const css = `
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; font-size:0.92rem; font-weight:700; cursor:pointer;
     display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:0.2s; box-shadow:0 4px 20px rgba(124,58,237,0.35);
-    font-family:'Inter',sans-serif;
+    transition:0.2s; box-shadow:0 4px 20px rgba(108,92,231,0.35); font-family:inherit;
   }
   .btn-share img { width:18px; height:18px; filter:brightness(10); }
   .btn-share:active { transform:scale(0.97); opacity:0.9; }
@@ -420,23 +382,18 @@ const css = `
     margin:0 auto 12px;
   }
   .ad-icon img { width:26px; height:26px; }
-  .ad-box h4 {
-    font-size:0.88rem; font-weight:600; margin-bottom:6px;
-    font-family:'Inter',sans-serif;
-  }
+  .ad-box h4 { font-size:0.88rem; font-weight:600; margin-bottom:6px; }
   .ad-counter {
     font-size:0.7rem; background:var(--surface2); border:1px solid var(--border);
     color:var(--text-dim); padding:3px 10px; border-radius:20px;
     display:inline-block; margin-bottom:14px; font-weight:500;
-    font-family:'Inter',sans-serif;
   }
   .ad-btn {
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; border:none; padding:10px 0; width:100%;
     border-radius:10px; font-size:0.83rem; font-weight:600; cursor:pointer;
     display:flex; align-items:center; justify-content:center; gap:6px;
-    transition:0.2s; box-shadow:0 3px 12px rgba(124,58,237,0.2);
-    font-family:'Inter',sans-serif;
+    transition:0.2s; box-shadow:0 3px 12px rgba(79,142,247,0.2); font-family:inherit;
   }
   .ad-btn img { width:14px; height:14px; filter:brightness(10); }
   .ad-btn:active { transform:scale(0.96); opacity:0.85; }
@@ -460,22 +417,16 @@ const css = `
     width:46px; height:46px; border-radius:var(--radius-sm);
     object-fit:cover; background:var(--surface2); flex-shrink:0;
   }
-  .task-info h4 {
-    font-size:0.9rem; font-weight:600; color:var(--text); margin-bottom:4px;
-    font-family:'Inter',sans-serif;
-  }
-  .task-reward {
-    font-size:0.76rem; font-weight:700; color:var(--green);
-    font-family:'Inter',sans-serif;
-  }
+  .task-info h4 { font-size:0.9rem; font-weight:600; color:var(--text); margin-bottom:4px; }
+  .task-reward { font-size:0.76rem; font-weight:700; color:var(--green); }
   .btn-task {
     padding:9px 15px; border-radius:10px; font-size:0.8rem;
     font-weight:600; cursor:pointer; border:none; transition:0.2s;
-    white-space:nowrap; font-family:'Inter',sans-serif;
+    white-space:nowrap; font-family:inherit;
   }
   .btn-task-start {
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
-    color:#fff; box-shadow:0 3px 12px rgba(124,58,237,0.22);
+    color:#fff; box-shadow:0 3px 12px rgba(79,142,247,0.22);
   }
   .btn-task-wait { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; border:1px solid var(--border); }
   .btn-task-claim {
@@ -490,15 +441,12 @@ const css = `
 
   /* ===================== WITHDRAW ===================== */
   .info-banner {
-    background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.18);
+    background:rgba(79,142,247,0.06); border:1px solid rgba(79,142,247,0.18);
     border-radius:var(--radius-sm); padding:14px 16px;
     display:flex; align-items:flex-start; gap:12px; margin-bottom:16px;
   }
   .info-banner img { width:18px; height:18px; flex-shrink:0; margin-top:1px; }
-  .info-banner p {
-    font-size:0.8rem; color:var(--text-mid); line-height:1.65;
-    font-family:'Inter',sans-serif;
-  }
+  .info-banner p { font-size:0.8rem; color:var(--text-mid); line-height:1.65; }
   .info-banner p strong { color:var(--text); }
   .input-wrap { position:relative; margin-bottom:12px; }
   .input-icon { position:absolute; top:50%; transform:translateY(-50%); left:15px; width:16px; height:16px; pointer-events:none; }
@@ -508,7 +456,7 @@ const css = `
     border-radius:var(--radius-sm); color:var(--text); font-size:0.93rem;
     font-weight:500; outline:none; transition:0.2s; font-family:'Inter',sans-serif;
   }
-  .form-inp:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(124,58,237,0.1); }
+  .form-inp:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,92,231,0.1); }
   .form-inp::placeholder { color:var(--text-dim); opacity:0.8; }
   select.form-inp { appearance:none; cursor:pointer; }
   .btn-submit {
@@ -516,8 +464,7 @@ const css = `
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; font-size:0.97rem; font-weight:700; cursor:pointer;
     margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:0.2s; box-shadow:0 4px 20px rgba(124,58,237,0.3);
-    font-family:'Inter',sans-serif;
+    transition:0.2s; box-shadow:0 4px 20px rgba(108,92,231,0.3); font-family:'Inter',sans-serif;
   }
   .btn-submit:active { transform:scale(0.98); opacity:0.9; }
   .btn-submit:disabled { background:var(--surface2); box-shadow:none; cursor:not-allowed; color:var(--text-dim); }
@@ -540,23 +487,11 @@ const css = `
     background:var(--surface2); display:flex; align-items:center; justify-content:center;
   }
   .hist-icon img { width:20px; height:20px; }
-  .hist-info h4 {
-    font-size:0.88rem; font-weight:600;
-    font-family:'Inter',sans-serif;
-  }
-  .hist-info small {
-    font-size:0.7rem; color:var(--text-dim);
-    font-family:'Inter',sans-serif;
-  }
+  .hist-info h4 { font-size:0.88rem; font-weight:600; }
+  .hist-info small { font-size:0.7rem; color:var(--text-dim); }
   .hist-right { text-align:right; }
-  .hist-amt {
-    font-size:0.92rem; font-weight:700; display:block; margin-bottom:4px;
-    font-family:'Inter',sans-serif;
-  }
-  .hist-badge {
-    font-size:0.62rem; padding:2px 8px; border-radius:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
-    font-family:'Inter',sans-serif;
-  }
+  .hist-amt { font-size:0.92rem; font-weight:700; display:block; margin-bottom:4px; }
+  .hist-badge { font-size:0.62rem; padding:2px 8px; border-radius:6px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
   .status-pending  { background:rgba(245,158,11,0.12); color:var(--warning); }
   .status-completed{ background:rgba(16,185,129,0.12); color:var(--green); }
   .status-rejected { background:rgba(239,68,68,0.12); color:var(--danger); }
@@ -565,7 +500,7 @@ const css = `
   .bottom-nav {
     position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
     width:calc(100% - 30px); max-width:420px;
-    background:rgba(12,12,26,0.90); border:1px solid var(--border2);
+    background:rgba(14,14,28,0.88); border:1px solid var(--border2);
     padding:6px 8px; border-radius:100px; display:flex; justify-content:space-around;
     z-index:100; box-shadow:0 12px 48px rgba(0,0,0,0.6);
     backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
@@ -579,11 +514,8 @@ const css = `
     width:28px; height:28px; object-fit:contain;
     filter:grayscale(1) brightness(0.35); transition:0.25s;
   }
-  .nav-item span {
-    font-size:0.59rem; font-weight:600; color:var(--text-dim); opacity:0; transition:0.2s;
-    font-family:'Inter',sans-serif;
-  }
-  .nav-item.active { background:rgba(124,58,237,0.08); }
+  .nav-item span { font-size:0.59rem; font-weight:600; color:var(--text-dim); opacity:0; transition:0.2s; }
+  .nav-item.active { background:rgba(108,92,231,0.1); }
   .nav-item.active .nav-img { filter:none; transform:scale(1.1); }
   .nav-item.active span { opacity:1; color:var(--primary2); }
   .nav-dot {
@@ -595,10 +527,7 @@ const css = `
   .nav-item.active .nav-dot { display:block; }
 
   /* ===================== EMPTY STATE ===================== */
-  .empty-state {
-    text-align:center; padding:32px 10px; color:var(--text-dim); font-size:0.86rem;
-    font-family:'Inter',sans-serif;
-  }
+  .empty-state { text-align:center; padding:32px 10px; color:var(--text-dim); font-size:0.86rem; }
   .empty-state img { width:40px; height:40px; opacity:0.25; display:block; margin:0 auto 12px; }
 
   /* ===================== SCROLLBAR ===================== */
@@ -608,12 +537,6 @@ const css = `
 
   /* ===================== DIVIDER ===================== */
   .divider { height:1px; background:var(--border); margin:4px 0 18px; }
-
-  /* ===================== UTILITY — fadeUp ===================== */
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(12px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
 `;
 
 // ============================================================
@@ -633,8 +556,8 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 tg.expand();
-tg.setHeaderColor?.('#05050f');
-tg.setBackgroundColor?.('#05050f');
+tg.setHeaderColor?.('#06060f');
+tg.setBackgroundColor?.('#06060f');
 
 const INIT_DATA = tg.initData || '';
 
@@ -656,7 +579,7 @@ async function apiCall(action, method = 'GET', body = null) {
         const res = await fetch(url, opts);
         const data = await res.json();
         if (res.status === 401) {
-            showToastGlobal('error', 'সেশন শেষ হয়েছে। অ্যাপ পুনরায় চালু করুন।');
+            showToastGlobal('error', 'Session expired. Please restart the app.');
             return null;
         }
         return data;
@@ -666,28 +589,35 @@ async function apiCall(action, method = 'GET', body = null) {
 }
 
 // ============================================================
-//  Loader — Lightning theme, NO TEXT (Bangla or English)
+//  Loader component — no Bengali text, no wallet image
 // ============================================================
 function Loader({ pct, hiding }) {
     return (
         <div className="loader-overlay" style={hiding ? { opacity: 0, transform: 'scale(1.04)' } : {}}>
             <div className="loader-mesh" />
-            <div className="bolt-particle bp1" />
-            <div className="bolt-particle bp2" />
-            <div className="bolt-particle bp3" />
-            <div className="loader-lightning-wrap">
-                <div className="lightning-ring lr1" />
-                <div className="lightning-ring lr2" />
-                <div className="lightning-ring lr3" />
-                <div className="lightning-icon">
-                    <img src={ICONS.bolt} alt="" />
+            <div className="loader-particle lp1" />
+            <div className="loader-particle lp2" />
+            <div className="loader-particle lp3" />
+            <div className="loader-inner">
+                <div className="loader-rings">
+                    <div className="lr-ring lr-ring-1" />
+                    <div className="lr-ring lr-ring-2" />
+                    <div className="lr-ring lr-ring-3" />
+                    <div className="lr-center">
+                        <img src={ICONS.coin} alt="" />
+                    </div>
                 </div>
-                <div className="sparkle sp1" />
-                <div className="sparkle sp2" />
-                <div className="sparkle sp3" />
-                <div className="sparkle sp4" />
+                <div className="loader-brand">Earn Wallet</div>
+                <div className="loader-progress-wrap">
+                    <div className="loader-bar-track">
+                        <div className="loader-bar-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="loader-pct">{pct}%</span>
+                </div>
+                <div className="loader-dots">
+                    <div className="ld-dot" /><div className="ld-dot" /><div className="ld-dot" />
+                </div>
             </div>
-            {/* No text — no brand, no percentage, no dots */}
         </div>
     );
 }
@@ -711,7 +641,7 @@ function Toast({ type, msg, show }) {
 }
 
 // ============================================================
-//  Home Page — Bangla
+//  Home Page
 // ============================================================
 function HomePage({ appState, onCopy, onShare }) {
     const u   = appState.user;
@@ -730,28 +660,28 @@ function HomePage({ appState, onCopy, onShare }) {
                     <div className="stat-icon-wrap blue">
                         <img src={ICONS.tv} alt="" />
                     </div>
-                    <p>বিজ্ঞাপন দেখা</p>
+                    <p>Ads Watched</p>
                     <h4>{totalAdViews}</h4>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon-wrap purple">
                         <img src={ICONS.share} alt="" />
                     </div>
-                    <p>মোট রেফারেল</p>
+                    <p>Total Referrals</p>
                     <h4>{u.referrals || 0}</h4>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon-wrap green">
                         <img src={ICONS.check} alt="" />
                     </div>
-                    <p>টাস্ক সম্পন্ন</p>
+                    <p>Tasks Completed</p>
                     <h4>{u.completedTaskCount || 0}</h4>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon-wrap orange">
                         <img src={ICONS.coin} alt="" />
                     </div>
-                    <p>মোট আয়</p>
+                    <p>Total Earned</p>
                     <h4>{(u.totalEarned || 0).toFixed(2)}</h4>
                 </div>
             </div>
@@ -762,22 +692,22 @@ function HomePage({ appState, onCopy, onShare }) {
                         <img src={ICONS.rocket} alt="" />
                     </div>
                     <div className="ref-title">
-                        <h4>বন্ধুদের আমন্ত্রণ জানান</h4>
+                        <h4>Invite Friends</h4>
                         <div className="ref-badge">
                             <img src={ICONS.gift} alt="" />
-                            প্রতি রেফারেলে {refBonus} {sym} উপার্জন!
+                            Earn {refBonus} {sym} per referral!
                         </div>
                     </div>
                 </div>
-                <div className="ref-label">আপনার রেফারেল লিংক</div>
+                <div className="ref-label">Your Referral Link</div>
                 <div className="ref-input-row">
                     <input className="ref-inp" readOnly value={refLink} onChange={() => {}} />
                     <button className="btn-copy" onClick={() => onCopy(refLink)}>
-                        <img src={ICONS.share} alt="" /> কপি
+                        <img src={ICONS.share} alt="" /> Copy
                     </button>
                 </div>
                 <button className="btn-share" onClick={() => onShare(refLink)}>
-                    <img src={ICONS.rocket} alt="" /> টেলিগ্রামে শেয়ার করুন
+                    <img src={ICONS.rocket} alt="" /> Share on Telegram
                 </button>
             </div>
         </div>
@@ -785,7 +715,7 @@ function HomePage({ appState, onCopy, onShare }) {
 }
 
 // ============================================================
-//  Earn Page — Bangla
+//  Earn Page
 // ============================================================
 function EarnPage({ appState, onAdDone, onTaskBegin }) {
     const cfg   = appState.config;
@@ -811,12 +741,12 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
     return (
         <div className="page active">
             <div className="sec-head">
-                <img src={ICONS.tv} alt="" /> বিজ্ঞাপন দেখুন ও আয় করুন
+                <img src={ICONS.tv} alt="" /> Watch Ads & Earn
             </div>
             {slots.length === 0 ? (
                 <div className="empty-state">
                     <img src={ICONS.tv} alt="" />
-                    বর্তমানে কোনো বিজ্ঞাপন উপলব্ধ নেই।
+                    No ads available right now.
                 </div>
             ) : (
                 <div className="ad-grid">
@@ -830,12 +760,12 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
                 </div>
             )}
             <div className="sec-head" style={{ marginTop: 28 }}>
-                <img src={ICONS.check} alt="" /> বিশেষ টাস্ক
+                <img src={ICONS.check} alt="" /> Special Tasks
             </div>
             {pendingTasks.length === 0 && completedTasks.length === 0 ? (
                 <div className="empty-state">
                     <img src={ICONS.chart} alt="" />
-                    কোনো টাস্ক উপলব্ধ নেই।
+                    No tasks available.
                 </div>
             ) : (
                 <div className="task-list">
@@ -850,7 +780,7 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
 }
 
 // ============================================================
-//  Ad Box — Bangla
+//  Ad Box
 // ============================================================
 function AdBox({ slot, index, done, limit, onAdDone }) {
     const [loading, setLoading] = useState(false);
@@ -867,7 +797,7 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             } else if (slot.network === 'gigapub' && window.showGiga) {
                 providerFunc = window.showGiga();
             } else {
-                alert('বিজ্ঞাপন নেটওয়ার্ক লোড হচ্ছে। আবার চেষ্টা করুন।');
+                alert('Ad network is loading. Please try again.');
                 setLoading(false);
                 return;
             }
@@ -886,15 +816,15 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             <div className="ad-icon">
                 <img src={ICONS.tv} alt="" />
             </div>
-            <h4>বিজ্ঞাপন {index + 1}</h4>
+            <h4>Ad {index + 1}</h4>
             <div className="ad-counter">{done}/{limit}</div>
             <button className="ad-btn" onClick={triggerAd} disabled={maxed || loading}>
                 {loading ? (
-                    <>লোডিং...</>
+                    <>Loading...</>
                 ) : maxed ? (
-                    <><img src={ICONS.lock} alt="" /> সম্পন্ন</>
+                    <><img src={ICONS.lock} alt="" /> Done</>
                 ) : (
-                    <><img src={ICONS.bolt} alt="" /> দেখুন</>
+                    <><img src={ICONS.bolt} alt="" /> Watch</>
                 )}
             </button>
         </div>
@@ -902,7 +832,7 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
 }
 
 // ============================================================
-//  Task Item — Bangla
+//  Task Item
 // ============================================================
 function TaskItem({ id, task, history, sym, now, onBegin }) {
     const [state, setState]       = useState('idle');
@@ -956,21 +886,21 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
             </div>
             {isDailyDone ? (
                 <button className="btn-task btn-task-wait" disabled>
-                    <img src={ICONS.clock} alt="" style={{width:12,height:12}} /> {hrs}ঘ {mins}মি
+                    <img src={ICONS.clock} alt="" style={{width:12,height:12}} /> {hrs}h {mins}m
                 </button>
             ) : state === 'idle' ? (
-                <button className="btn-task btn-task-start" onClick={handleStart}>শুরু</button>
+                <button className="btn-task btn-task-start" onClick={handleStart}>Start</button>
             ) : state === 'waiting' ? (
-                <button className="btn-task btn-task-wait" disabled>{countdown}সে</button>
+                <button className="btn-task btn-task-wait" disabled>{countdown}s</button>
             ) : (
-                <button className="btn-task btn-task-claim" onClick={handleClaim}>দাবি!</button>
+                <button className="btn-task btn-task-claim" onClick={handleClaim}>Claim!</button>
             )}
         </div>
     );
 }
 
 // ============================================================
-//  Withdraw Page — Bangla
+//  Withdraw Page
 // ============================================================
 function WithdrawPage({ appState, onWithdraw }) {
     const cfg    = appState.config;
@@ -987,7 +917,7 @@ function WithdrawPage({ appState, onWithdraw }) {
     const selectedMethod = methods.find(m => m.name === method) || methods[0];
     const sysMin = parseFloat(selectedMethod?.min || 10);
 
-    const statusMap = { pending:'অপেক্ষমান', completed:'সম্পন্ন', rejected:'বাতিল' };
+    const statusMap = { pending:'Pending', completed:'Completed', rejected:'Rejected' };
     const histIcons = {
         completed: ICONS.check,
         rejected:  ICONS.bell,
@@ -1002,20 +932,20 @@ function WithdrawPage({ appState, onWithdraw }) {
     async function handleSubmit() {
         if (processing) return;
         if (u.referrals < minRef) {
-            showToastGlobal('warning', `উত্তোলনের জন্য ন্যূনতম ${minRef} রেফারেল প্রয়োজন।`);
+            showToastGlobal('warning', `Min ${minRef} referrals needed to withdraw.`);
             tg.HapticFeedback.notificationOccurred('warning');
             return;
         }
         const reqAmt = parseFloat(amount);
         if (!account || account.trim().length < 3) {
-            showToastGlobal('error', 'একটি বৈধ অ্যাকাউন্ট নম্বর দিন।'); return;
+            showToastGlobal('error', 'Enter a valid account number.'); return;
         }
         if (!reqAmt || isNaN(reqAmt) || reqAmt < sysMin) {
-            showToastGlobal('error', `ন্যূনতম উত্তোলন ${sysMin} ${sym}।`);
+            showToastGlobal('error', `Minimum withdrawal is ${sysMin} ${sym}.`);
             tg.HapticFeedback.notificationOccurred('error'); return;
         }
         if (reqAmt > u.balance) {
-            showToastGlobal('error', 'পর্যাপ্ত ব্যালেন্স নেই।');
+            showToastGlobal('error', 'Insufficient balance.');
             tg.HapticFeedback.notificationOccurred('error'); return;
         }
         setProcessing(true);
@@ -1027,49 +957,49 @@ function WithdrawPage({ appState, onWithdraw }) {
     return (
         <div className="page active">
             <div className="sec-head">
-                <img src={ICONS.withdraw} alt="" /> উত্তোলন
+                <img src={ICONS.withdraw} alt="" /> Withdraw
             </div>
             <div className="info-banner">
                 <img src={ICONS.bolt} alt="" />
                 <div>
                     <p>
-                        <strong>ন্যূনতম:</strong> {sysMin} {sym} &nbsp;|&nbsp;
-                        <strong>ন্যূনতম রেফারেল:</strong> {minRef}
+                        <strong>Minimum:</strong> {sysMin} {sym} &nbsp;|&nbsp;
+                        <strong>Min Referrals:</strong> {minRef}
                     </p>
                 </div>
             </div>
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.coin} alt="" />
                 <select className="form-inp" value={method} onChange={e => setMethod(e.target.value)}>
-                    {methods.length === 0 && <option value="">কোন পদ্ধতি নেই</option>}
+                    {methods.length === 0 && <option value="">No methods available</option>}
                     {methods.map(m => (
-                        <option key={m.name} value={m.name}>{m.name} (ন্যূনতম {m.min})</option>
+                        <option key={m.name} value={m.name}>{m.name} (min {m.min})</option>
                     ))}
                 </select>
             </div>
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.share} alt="" />
-                <input className="form-inp" placeholder="অ্যাকাউন্ট নম্বর / ট্যাগ" value={account} onChange={e => setAccount(e.target.value)} />
+                <input className="form-inp" placeholder="Account number / tag" value={account} onChange={e => setAccount(e.target.value)} />
             </div>
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.coin} alt="" />
-                <input className="form-inp" type="number" placeholder="উত্তোলনের পরিমাণ" value={amount} onChange={e => setAmount(e.target.value)} />
+                <input className="form-inp" type="number" placeholder="Amount to withdraw" value={amount} onChange={e => setAmount(e.target.value)} />
             </div>
             <button className="btn-submit" onClick={handleSubmit} disabled={processing}>
                 {processing
-                    ? <><img src={ICONS.clock} alt="" /> প্রক্রিয়াকরণ...</>
-                    : <><img src={ICONS.withdraw} alt="" /> উত্তোলন অনুরোধ</>
+                    ? <><img src={ICONS.clock} alt="" /> Processing...</>
+                    : <><img src={ICONS.withdraw} alt="" /> Request Payout</>
                 }
             </button>
 
             <div className="sec-head" style={{ marginTop: 34 }}>
-                <img src={ICONS.chart} alt="" /> সাম্প্রতিক লেনদেন
+                <img src={ICONS.chart} alt="" /> Recent Transactions
             </div>
             <div className="hist-wrap">
                 {(!appState.history || appState.history.length === 0) ? (
                     <div className="empty-state">
                         <img src={ICONS.chart} alt="" />
-                        এখনো কোনো লেনদেন নেই।
+                        No transactions yet.
                     </div>
                 ) : appState.history.map((d, idx) => {
                     const sl = d.status?.toLowerCase() || 'pending';
@@ -1083,7 +1013,7 @@ function WithdrawPage({ appState, onWithdraw }) {
                                 <div className="hist-info">
                                     <h4>{d.method}</h4>
                                     <small>
-                                        {dt.toLocaleDateString('bn-BD')} &middot; {dt.toLocaleTimeString('bn-BD', { hour:'2-digit', minute:'2-digit' })}
+                                        {dt.toLocaleDateString()} &middot; {dt.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
                                     </small>
                                 </div>
                             </div>
@@ -1151,7 +1081,7 @@ export default function App() {
             try { setAppState(JSON.parse(cached)); } catch {}
         }
 
-        // Smooth progress animation — just for visual, no text shown
+        // Smooth progress animation
         let pct = 0;
         const ticker = setInterval(() => {
             pct = Math.min(pct + 2, 88);
@@ -1202,7 +1132,7 @@ export default function App() {
                     setLoaderHide(true);
                     setTimeout(() => {
                         setAppReady(true);
-                        showToast('error', 'সংযোগ ব্যর্থ হয়েছে। অফলাইনে চলছে।');
+                        showToast('error', 'Connection failed. Running in offline mode.');
                     }, 480);
                 }, 300);
             }
@@ -1228,7 +1158,7 @@ export default function App() {
         const today = new Date().toISOString().slice(0, 10);
         const res = await apiCall('claimAdReward', 'POST', { slotId });
         if (!res || res.error) {
-            showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
+            showToast('error', res?.error || 'Reward claim failed.');
             return;
         }
         const rwrd = res.reward;
@@ -1249,14 +1179,14 @@ export default function App() {
             saveLocal(next);
             return next;
         });
-        showToast('success', `+${rwrd} ${appState.config.currencySymbol || 'টাকা'} পুরস্কার!`);
+        showToast('success', `+${rwrd} ${appState.config.currencySymbol || 'টাকা'} reward!`);
     }
 
     // ===== TASK REWARD =====
     async function handleTaskBegin(id) {
         const res = await apiCall('claimTaskReward', 'POST', { taskId: id });
         if (!res || res.error) {
-            showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
+            showToast('error', res?.error || 'Reward claim failed.');
             return;
         }
         const rwrd = res.reward;
@@ -1274,7 +1204,7 @@ export default function App() {
             saveLocal(next);
             return next;
         });
-        showToast('success', 'টাস্ক সম্পন্ন! পুরস্কার যোগ হয়েছে।');
+        showToast('success', 'Task complete! Reward added.');
         tg.HapticFeedback.notificationOccurred('success');
     }
 
@@ -1291,18 +1221,18 @@ export default function App() {
             if (updtHist) {
                 setAppState(prev => { const n = { ...prev, history: updtHist }; saveLocal(n); return n; });
             }
-            showToast('success', 'উত্তোলন অনুরোধ জমা দেওয়া হয়েছে!');
+            showToast('success', 'Withdrawal request submitted!');
             tg.HapticFeedback.notificationOccurred('success');
             return true;
         } else {
-            showToast('error', rData?.message || 'সার্ভার ত্রুটি। আবার চেষ্টা করুন।');
+            showToast('error', rData?.message || 'Server error. Please try again.');
             return false;
         }
     }
 
     function handleCopy(link) {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(link).then(() => showToast('success', 'লিংক কপি করা হয়েছে!'));
+            navigator.clipboard.writeText(link).then(() => showToast('success', 'Link copied!'));
         } else {
             const tmp = document.createElement('input');
             tmp.value = link;
@@ -1310,18 +1240,18 @@ export default function App() {
             tmp.select();
             document.execCommand('copy');
             document.body.removeChild(tmp);
-            showToast('success', 'লিংক কপি করা হয়েছে!');
+            showToast('success', 'Link copied!');
         }
         tg.HapticFeedback.notificationOccurred('success');
     }
 
     function handleShare(link) {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('যোগ দিন এবং এখনই আয় শুরু করুন!')}`);
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Join now and start earning!')}`);
     }
 
     function openSupport() {
         if (appState.config.supportLink) tg.openLink(appState.config.supportLink);
-        else showToast('warning', 'সাপোর্ট লিংক কনফিগার করা নেই।');
+        else showToast('warning', 'Support link not configured.');
     }
 
     async function handleNav(page) {
@@ -1354,43 +1284,43 @@ export default function App() {
                         <div className="user-pill">
                             <div className="user-avatar">
                                 <img
-                                    src={u.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.firstName||'U')}&background=7c3aed&color=fff&size=88`}
+                                    src={u.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.firstName||'U')}&background=6c5ce7&color=fff&size=88`}
                                     alt={u.firstName}
                                 />
                                 <div className="avatar-status" />
                             </div>
                             <div className="user-info">
                                 <h3>{u.firstName || tgUser.first_name}</h3>
-                                <p>আইডি: {u.id || tgUser.id}</p>
+                                <p>ID: {u.id || tgUser.id}</p>
                             </div>
                         </div>
-                        <button className="notif-btn" onClick={openSupport} aria-label="সাপোর্ট">
-                            <img src={ICONS.bell} alt="সাপোর্ট" />
+                        <button className="notif-btn" onClick={openSupport} aria-label="Support">
+                            <img src={ICONS.bell} alt="Support" />
                             <div className="notif-dot" />
                         </button>
                     </header>
 
-                    {/* Balance Card — only on home, Purple Glow */}
+                    {/* Balance Card — only on home */}
                     {activePage === 'home' && (
                         <div className="balance-card">
                             <div className="bc-glow" />
                             <div className="bc-grid" />
-                            <div className="bc-label">মোট ব্যালেন্স</div>
+                            <div className="bc-label">Total Balance</div>
                             <div className="bc-amount">
                                 {(u.balance || 0).toFixed(2)}
                                 <span className="bc-sym"> {sym}</span>
                             </div>
                             <div className="bc-footer">
                                 <div className="bc-mini">
-                                    <span>মোট আয়</span>
+                                    <span>Total Earned</span>
                                     <span>{(u.totalEarned || 0).toFixed(2)}</span>
                                 </div>
                                 <div className="bc-mini">
-                                    <span>রেফারেল</span>
+                                    <span>Referrals</span>
                                     <span>{u.referrals || 0}</span>
                                 </div>
                                 <div className="bc-mini">
-                                    <span>বিজ্ঞাপন দেখা</span>
+                                    <span>Ads Watched</span>
                                     <span>{totalAdViews}</span>
                                 </div>
                             </div>
@@ -1404,12 +1334,12 @@ export default function App() {
                         {activePage === 'withdraw' && <WithdrawPage appState={appState} onWithdraw={handleWithdraw} />}
                     </main>
 
-                    {/* Bottom Nav — 3D Twemoji icons, Bangla labels */}
-                    <nav className="bottom-nav" aria-label="প্রধান নেভিগেশন">
+                    {/* Bottom Nav — 3D Twemoji icons */}
+                    <nav className="bottom-nav" aria-label="Main navigation">
                         {[
-                            { page:'home',     icon:ICONS.home,     label:'হোম' },
-                            { page:'earn',     icon:ICONS.earn,     label:'আয়' },
-                            { page:'withdraw', icon:ICONS.withdraw, label:'উত্তোলন' },
+                            { page:'home',     icon:ICONS.home,     label:'Home' },
+                            { page:'earn',     icon:ICONS.earn,     label:'Earn' },
+                            { page:'withdraw', icon:ICONS.withdraw, label:'Withdraw' },
                         ].map(({ page, icon, label }) => (
                             <div
                                 key={page}
