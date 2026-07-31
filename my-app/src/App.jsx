@@ -1,11 +1,14 @@
 /**
- * =========================================================
- *  Earn Wallet — React Frontend  (Modern UI)
+ * ============================================================
+ *  Earn Wallet — React Frontend (Modern Premium UI)
+ *  Language: Bengali (Bangla)
+ *  API: https://www.gajarbotol.site/nirob/api.php
  * ============================================================
  *  Security:
  *   1. Telegram initData HMAC verification on every API call
  *   2. Server-side reward calculation (no client amounts)
  *   3. Balance only updated from server response
+ *   4. Spam protection: buttons disabled until server response
  * ============================================================
  */
 
@@ -14,10 +17,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ============================================================
 //  CONFIG
 // ============================================================
-const API_URL = "https://www.gajarbotol.site/nirob/api.php"; // Replace with your api.php URL
+const API_URL = "https://www.gajarbotol.site/nirob/api.php";
 
 // ============================================================
-//  3D Twemoji icon URLs — high quality, no emojis in nav
+//  3D Twemoji icons (only for navigation and small icons)
 // ============================================================
 const ICONS = {
   home:     "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f3e0.png",
@@ -39,22 +42,22 @@ const ICONS = {
 };
 
 // ============================================================
-//  GLOBAL CSS
+//  GLOBAL CSS — Premium Modern Design
 // ============================================================
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
   :root {
-    --bg: #06060f;
-    --surface: #0e0e1c;
-    --surface2: #15152a;
-    --surface3: #1c1c34;
+    --bg: #05050e;
+    --surface: #0b0b1a;
+    --surface2: #13132a;
+    --surface3: #1a1a3a;
     --text: #f0f0fa;
-    --text-dim: #6e6e98;
-    --text-mid: #9898c0;
-    --border: #1e1e38;
-    --border2: #28284a;
-    --primary: #6c5ce7;
+    --text-dim: #6a6a96;
+    --text-mid: #9494c0;
+    --border: #1a1a3a;
+    --border2: #25254a;
+    --primary: #7c3aed;
     --primary2: #a78bfa;
     --primary3: #c4b5fd;
     --blue: #4f8ef7;
@@ -62,12 +65,14 @@ const css = `
     --green: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
-    --grad-a: #4f8ef7;
-    --grad-b: #7c3aed;
+    --grad-a: #7c3aed;
+    --grad-b: #4f8ef7;
     --grad-c: #a78bfa;
-    --radius-lg: 22px;
+    --radius-lg: 24px;
     --radius-md: 16px;
     --radius-sm: 12px;
+    --glow-purple: 0 0 60px rgba(124,58,237,0.5);
+    --glow-purple-strong: 0 0 90px rgba(124,58,237,0.7);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -75,106 +80,51 @@ const css = `
   body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; overflow-x:hidden; }
   #root { max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:100px; position:relative; }
 
-  /* ===================== LOADER ===================== */
+  /* ===================== LOADER — Premium Lightning Animation (No Text) ===================== */
   .loader-overlay {
     position:fixed; inset:0; background:var(--bg); z-index:9999;
-    display:flex; justify-content:center; align-items:center; flex-direction:column;
-    overflow:hidden; transition:opacity 0.55s ease, transform 0.55s ease;
+    display:flex; justify-content:center; align-items:center;
+    transition:opacity 0.6s ease, transform 0.6s ease;
   }
-  /* Animated mesh gradient background */
-  .loader-mesh {
-    position:absolute; inset:0; z-index:0;
-    background: radial-gradient(ellipse at 20% 30%, rgba(108,92,231,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 70%, rgba(79,142,247,0.1) 0%, transparent 60%),
-                radial-gradient(ellipse at 50% 90%, rgba(6,182,212,0.08) 0%, transparent 50%);
-    animation: meshShift 8s ease-in-out infinite alternate;
+  .loader-bg-glow {
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 60%);
+    animation: pulseGlow 2.5s ease-in-out infinite alternate;
   }
-  @keyframes meshShift {
-    from { filter: hue-rotate(0deg); }
-    to { filter: hue-rotate(30deg); }
+  @keyframes pulseGlow {
+    0% { opacity:0.5; transform:scale(1); }
+    100% { opacity:1; transform:scale(1.2); }
   }
-  /* Floating particles */
-  .loader-particle {
-    position:absolute; border-radius:50%; pointer-events:none;
-    background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
-    opacity:0.08; filter:blur(40px);
-    animation: particleFloat 8s ease-in-out infinite;
-  }
-  .lp1 { width:300px;height:300px; top:-80px; left:-80px; animation-duration:7s; }
-  .lp2 { width:250px;height:250px; bottom:-60px; right:-60px; animation-delay:2s; animation-duration:9s; }
-  .lp3 { width:180px;height:180px; top:40%; right:5%; opacity:0.06; animation-delay:4s; animation-duration:6s; }
-  @keyframes particleFloat {
-    0%,100% { transform:translate(0,0) scale(1); }
-    33% { transform:translate(20px,-15px) scale(1.08); }
-    66% { transform:translate(-12px,18px) scale(0.96); }
-  }
-  .loader-inner {
-    position:relative; z-index:2; display:flex; flex-direction:column;
-    align-items:center; gap:32px;
-  }
-  /* Spinner rings */
-  .loader-rings { position:relative; width:96px; height:96px; }
-  .lr-ring {
-    position:absolute; inset:0; border-radius:50%;
-    border:2.5px solid transparent;
-    animation:ringSpinA 1.4s linear infinite;
-  }
-  .lr-ring-1 { border-top-color:var(--blue); border-right-color:rgba(79,142,247,0.2); }
-  .lr-ring-2 {
-    inset:10px; border:2px solid transparent;
-    border-bottom-color:var(--primary2); border-left-color:rgba(167,139,250,0.2);
-    animation:ringSpinB 2s linear infinite;
-  }
-  .lr-ring-3 {
-    inset:22px; border:2px solid transparent;
-    border-top-color:var(--cyan); border-right-color:rgba(6,182,212,0.2);
-    animation:ringSpinA 1s linear infinite reverse;
-  }
-  @keyframes ringSpinA { to { transform: rotate(360deg); } }
-  @keyframes ringSpinB { to { transform: rotate(-360deg); } }
-  .lr-center {
-    position:absolute; inset:32px; border-radius:50%;
-    background: linear-gradient(135deg, var(--primary), var(--blue));
+  .loader-lightning-container {
+    position:relative; z-index:2;
     display:flex; align-items:center; justify-content:center;
-    box-shadow: 0 0 20px rgba(108,92,231,0.4);
-    animation: centerPulse 2s ease-in-out infinite;
   }
-  .lr-center img { width:22px; height:22px; filter: brightness(10); }
-  @keyframes centerPulse {
-    0%,100% { box-shadow: 0 0 20px rgba(108,92,231,0.4); transform:scale(1); }
-    50% { box-shadow: 0 0 32px rgba(108,92,231,0.7); transform:scale(1.08); }
+  /* Main lightning bolt made with SVG (no emoji) */
+  .lightning-svg {
+    width:120px; height:120px;
+    filter: drop-shadow(0 0 40px rgba(124,58,237,0.8)) drop-shadow(0 0 80px rgba(79,142,247,0.4));
+    animation: lightningRotate 4s ease-in-out infinite alternate;
   }
-  /* Brand name */
-  .loader-brand {
-    font-size:1.8rem; font-weight:800; letter-spacing:-1px;
-    background: linear-gradient(135deg, var(--blue), var(--primary2), var(--cyan));
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    background-size:200%; animation:brandShimmer 3s linear infinite;
+  @keyframes lightningRotate {
+    0% { transform: rotate(-5deg) scale(1); }
+    100% { transform: rotate(5deg) scale(1.08); }
   }
-  @keyframes brandShimmer {
-    0% { background-position:0% 50%; }
-    100% { background-position:200% 50%; }
+  /* Spark particles around lightning */
+  .spark {
+    position:absolute; border-radius:50%;
+    background: radial-gradient(circle, rgba(167,139,250,0.9), transparent 70%);
+    animation: sparkFloat 2s ease-in-out infinite alternate;
   }
-  /* Progress bar */
-  .loader-progress-wrap { width:220px; display:flex; flex-direction:column; gap:10px; align-items:center; }
-  .loader-bar-track {
-    width:100%; height:3px; background:var(--surface2); border-radius:10px; overflow:hidden;
+  .spark1 { width:8px; height:8px; top:-30px; right:-20px; animation-delay:0s; }
+  .spark2 { width:6px; height:6px; bottom:-25px; left:-15px; animation-delay:0.5s; }
+  .spark3 { width:10px; height:10px; top:20px; right:-40px; animation-delay:1s; }
+  .spark4 { width:5px; height:5px; bottom:10px; left:-35px; animation-delay:1.5s; }
+  .spark5 { width:7px; height:7px; top:-10px; left:-30px; animation-delay:0.3s; }
+  @keyframes sparkFloat {
+    0% { transform:translate(0,0) scale(0.5); opacity:0.3; }
+    100% { transform:translate(15px,-20px) scale(1.5); opacity:1; }
   }
-  .loader-bar-fill {
-    height:100%; width:0%;
-    background: linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
-    border-radius:10px; transition:width 0.5s cubic-bezier(0.4,0,0.2,1);
-    background-size:200%; animation:barShimmer 1.5s linear infinite;
-  }
-  @keyframes barShimmer { 0%{background-position:100%} 100%{background-position:-100%} }
-  .loader-pct { font-size:11px; font-weight:700; color:var(--primary2); letter-spacing:0.5px; }
-  /* Dots */
-  .loader-dots { display:flex; gap:7px; }
-  .ld-dot { width:5px; height:5px; border-radius:50%; background:var(--border2); }
-  .ld-dot:nth-child(1){animation:dotAnim 1.4s ease-in-out infinite 0s}
-  .ld-dot:nth-child(2){animation:dotAnim 1.4s ease-in-out infinite 0.2s}
-  .ld-dot:nth-child(3){animation:dotAnim 1.4s ease-in-out infinite 0.4s}
-  @keyframes dotAnim { 0%,80%,100%{transform:scale(0.6);opacity:0.3} 40%{transform:scale(1);opacity:1;background:var(--primary2)} }
+  /* No text, no progress bar, no percentage */
 
   /* ===================== TOAST ===================== */
   .toast {
@@ -186,6 +136,7 @@ const css = `
     display:flex; align-items:center; gap:9px;
     z-index:10000; transition:top 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
     max-width:88%; white-space:nowrap; pointer-events:none;
+    font-family:'Inter',sans-serif;
   }
   .toast.show { top:20px; }
   .toast-icon { width:18px; height:18px; flex-shrink:0; }
@@ -201,7 +152,7 @@ const css = `
   .user-avatar img {
     width:44px; height:44px; border-radius:50%;
     border:2px solid var(--primary); object-fit:cover;
-    box-shadow:0 0 0 3px rgba(108,92,231,0.15);
+    box-shadow:0 0 0 3px rgba(124,58,237,0.25), 0 0 30px rgba(124,58,237,0.15);
   }
   .avatar-status {
     position:absolute; bottom:1px; right:1px; width:12px; height:12px;
@@ -212,7 +163,7 @@ const css = `
     0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)}
     50%{box-shadow:0 0 0 4px rgba(16,185,129,0)}
   }
-  .user-info h3 { font-size:0.95rem; font-weight:700; color:var(--text); }
+  .user-info h3 { font-size:0.95rem; font-weight:700; }
   .user-info p { font-size:0.7rem; color:var(--text-dim); margin-top:1px; }
   .notif-btn {
     width:40px; height:40px; background:var(--surface2); border:1px solid var(--border2);
@@ -230,77 +181,102 @@ const css = `
   .page { display:none; padding:0 16px; }
   .page.active {
     display:block;
-    animation:pageSlideIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    animation:pageSlideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
   }
   @keyframes pageSlideIn {
-    from { opacity:0; transform:translateY(20px) scale(0.97); }
+    from { opacity:0; transform:translateY(24px) scale(0.96); }
     to   { opacity:1; transform:translateY(0) scale(1); }
   }
 
-  /* ===================== BALANCE CARD ===================== */
+  /* ===================== BALANCE CARD — Ultra Bright Glow ===================== */
   .balance-card {
     margin: 0 16px 20px;
-    background: linear-gradient(135deg, #1a1040 0%, #0d1a40 50%, #0a2040 100%);
-    border:1px solid rgba(108,92,231,0.25);
+    background: linear-gradient(145deg, #0d0d2b 0%, #1a0a3a 40%, #0a1a4a 80%, #0d0d2b 100%);
+    border:1px solid rgba(124,58,237,0.5);
     border-radius:var(--radius-lg); padding:28px 24px 24px;
     position:relative; overflow:hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset;
-    animation: cardIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+    box-shadow: var(--glow-purple), 0 0 0 1px rgba(124,58,237,0.2) inset;
+    animation: cardGlowIn 0.9s cubic-bezier(0.34,1.56,0.64,1) both;
+    transition:box-shadow 0.6s;
   }
-  @keyframes cardIn {
-    from { transform:scale(0.9) translateY(16px); opacity:0; }
-    to   { transform:scale(1) translateY(0); opacity:1; }
+  .balance-card:hover {
+    box-shadow: var(--glow-purple-strong), 0 0 0 2px rgba(124,58,237,0.3) inset;
+  }
+  @keyframes cardGlowIn {
+    from { transform:scale(0.85) translateY(30px); opacity:0; box-shadow:0 0 0 rgba(124,58,237,0); }
+    to   { transform:scale(1) translateY(0); opacity:1; box-shadow:var(--glow-purple); }
   }
   .bc-glow {
     position:absolute; inset:0; pointer-events:none;
-    background: radial-gradient(ellipse at 0% 0%, rgba(79,142,247,0.15) 0%, transparent 60%),
-                radial-gradient(ellipse at 100% 100%, rgba(108,92,231,0.12) 0%, transparent 60%);
+    background: radial-gradient(ellipse at 20% 10%, rgba(124,58,237,0.4) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 90%, rgba(79,142,247,0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.1) 0%, transparent 40%);
+    animation: glowDrift 7s ease-in-out infinite alternate;
+  }
+  @keyframes glowDrift {
+    0% { opacity:0.6; transform:scale(1) rotate(-2deg); }
+    100% { opacity:1; transform:scale(1.08) rotate(2deg); }
   }
   .bc-grid {
     position:absolute; inset:0; pointer-events:none;
-    background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background-image: linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity:0.6;
   }
   .bc-label {
-    font-size:0.68rem; text-transform:uppercase; letter-spacing:2px;
-    color:rgba(255,255,255,0.45); font-weight:600; margin-bottom:10px;
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:3px;
+    color:rgba(167,139,250,0.8); font-weight:700; margin-bottom:10px;
     position:relative; z-index:1;
   }
   .bc-amount {
-    font-size:3rem; font-weight:800; color:#fff; letter-spacing:-2px; line-height:1;
+    font-size:3.2rem; font-weight:900; color:#fff; letter-spacing:-2px; line-height:1;
     position:relative; z-index:1;
+    text-shadow:0 0 60px rgba(124,58,237,0.3);
   }
-  .bc-sym { font-size:1.3rem; font-weight:600; opacity:0.7; letter-spacing:0; }
+  .bc-sym { font-size:1.3rem; font-weight:600; opacity:0.7; }
   .bc-footer {
     display:flex; gap:20px; margin-top:22px; position:relative; z-index:1;
-    padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);
+    padding-top:16px; border-top:1px solid rgba(124,58,237,0.2);
   }
-  .bc-mini span:first-child { font-size:0.65rem; color:rgba(255,255,255,0.45); font-weight:500; display:block; }
+  .bc-mini span:first-child {
+    font-size:0.65rem; color:rgba(167,139,250,0.6); font-weight:600; display:block;
+  }
   .bc-mini span:last-child { font-size:0.95rem; color:#fff; font-weight:700; }
 
-  /* ===================== SECTION HEADING ===================== */
+  /* ===================== SECTION HEADING — Bangla ===================== */
   .sec-head {
-    font-size:0.85rem; font-weight:700; margin:24px 0 14px;
+    font-size:0.9rem; font-weight:700; margin:24px 0 14px;
     display:flex; align-items:center; gap:8px; color:var(--text);
-    text-transform:uppercase; letter-spacing:0.8px;
+    text-transform:uppercase; letter-spacing:0.5px;
   }
   .sec-head img { width:18px; height:18px; }
 
-  /* ===================== STATS GRID ===================== */
+  /* ===================== STATS GRID — Jumping Cards ===================== */
   .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
   .stat-card {
     background:var(--surface); border:1px solid var(--border);
     border-radius:var(--radius-md); padding:16px 14px;
-    transition:transform 0.2s, border-color 0.2s;
-    animation:fadeUp 0.5s ease both;
+    transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s, box-shadow 0.3s;
+    animation: cardJump 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+    cursor:default;
   }
-  .stat-card:nth-child(1){animation-delay:0.04s}
-  .stat-card:nth-child(2){animation-delay:0.08s}
-  .stat-card:nth-child(3){animation-delay:0.12s}
-  .stat-card:nth-child(4){animation-delay:0.16s}
-  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-  .stat-card:active { transform:scale(0.97); }
+  .stat-card:nth-child(1){ animation-delay:0.04s; }
+  .stat-card:nth-child(2){ animation-delay:0.10s; }
+  .stat-card:nth-child(3){ animation-delay:0.16s; }
+  .stat-card:nth-child(4){ animation-delay:0.22s; }
+  @keyframes cardJump {
+    0% { opacity:0; transform:translateY(30px) scale(0.92) rotate(-1deg); }
+    30% { transform:translateY(-10px) scale(1.03) rotate(0.5deg); }
+    60% { transform:translateY(4px) scale(0.99) rotate(-0.2deg); }
+    100% { opacity:1; transform:translateY(0) scale(1) rotate(0deg); }
+  }
+  .stat-card:hover {
+    transform:translateY(-6px) scale(1.02);
+    border-color:rgba(124,58,237,0.4);
+    box-shadow:0 10px 30px rgba(124,58,237,0.1);
+  }
+  .stat-card:active { transform:scale(0.96) translateY(0); }
   .stat-icon-wrap {
     width:36px; height:36px; border-radius:11px;
     display:flex; align-items:center; justify-content:center;
@@ -308,7 +284,7 @@ const css = `
   }
   .stat-icon-wrap img { width:22px; height:22px; }
   .stat-icon-wrap.blue { background:rgba(79,142,247,0.12); }
-  .stat-icon-wrap.purple { background:rgba(108,92,231,0.12); }
+  .stat-icon-wrap.purple { background:rgba(124,58,237,0.12); }
   .stat-icon-wrap.green { background:rgba(16,185,129,0.12); }
   .stat-icon-wrap.orange { background:rgba(245,158,11,0.12); }
   .stat-card p { font-size:0.7rem; color:var(--text-dim); font-weight:500; margin-bottom:5px; }
@@ -321,13 +297,13 @@ const css = `
     margin-bottom:18px; position:relative; overflow:hidden;
   }
   .ref-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+    content:''; position:absolute; top:0; left:0; right:0; height:2.5px;
+    background: linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
   }
   .ref-top { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
   .ref-icon {
     width:44px; height:44px; border-radius:14px;
-    background:rgba(108,92,231,0.14); border:1px solid rgba(108,92,231,0.2);
+    background:rgba(124,58,237,0.14); border:1px solid rgba(124,58,237,0.2);
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .ref-icon img { width:24px; height:24px; }
@@ -352,19 +328,21 @@ const css = `
     color:#fff; border:none; padding:9px 15px; border-radius:9px;
     font-size:0.8rem; font-weight:600; cursor:pointer;
     display:flex; align-items:center; gap:6px; transition:0.2s; flex-shrink:0;
-    box-shadow:0 3px 12px rgba(79,142,247,0.25);
+    box-shadow:0 3px 12px rgba(124,58,237,0.25);
   }
   .btn-copy img { width:14px; height:14px; filter:brightness(10); }
   .btn-copy:active { transform:scale(0.93); opacity:0.85; }
+  .btn-copy:disabled { opacity:0.6; cursor:not-allowed; }
   .btn-share {
     width:100%; padding:14px; border:none; border-radius:var(--radius-sm);
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; font-size:0.92rem; font-weight:700; cursor:pointer;
     display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:0.2s; box-shadow:0 4px 20px rgba(108,92,231,0.35); font-family:inherit;
+    transition:0.2s; box-shadow:0 4px 20px rgba(124,58,237,0.35);
   }
   .btn-share img { width:18px; height:18px; filter:brightness(10); }
   .btn-share:active { transform:scale(0.97); opacity:0.9; }
+  .btn-share:disabled { opacity:0.6; cursor:not-allowed; }
 
   /* ===================== ADS ===================== */
   .ad-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -393,10 +371,10 @@ const css = `
     color:#fff; border:none; padding:10px 0; width:100%;
     border-radius:10px; font-size:0.83rem; font-weight:600; cursor:pointer;
     display:flex; align-items:center; justify-content:center; gap:6px;
-    transition:0.2s; box-shadow:0 3px 12px rgba(79,142,247,0.2); font-family:inherit;
+    transition:0.2s; box-shadow:0 3px 12px rgba(124,58,237,0.2);
   }
   .ad-btn img { width:14px; height:14px; filter:brightness(10); }
-  .ad-btn:active { transform:scale(0.96); opacity:0.85; }
+  .ad-btn:active:not(:disabled) { transform:scale(0.96); opacity:0.85; }
   .ad-btn:disabled {
     background:var(--surface2); color:var(--text-dim); cursor:not-allowed;
     border:1px solid var(--border); box-shadow:none;
@@ -422,18 +400,20 @@ const css = `
   .btn-task {
     padding:9px 15px; border-radius:10px; font-size:0.8rem;
     font-weight:600; cursor:pointer; border:none; transition:0.2s;
-    white-space:nowrap; font-family:inherit;
+    white-space:nowrap;
   }
   .btn-task-start {
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
-    color:#fff; box-shadow:0 3px 12px rgba(79,142,247,0.22);
+    color:#fff; box-shadow:0 3px 12px rgba(124,58,237,0.22);
   }
+  .btn-task-start:disabled { opacity:0.6; cursor:not-allowed; }
   .btn-task-wait { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; border:1px solid var(--border); }
   .btn-task-claim {
     background: linear-gradient(135deg, var(--green), #059669);
     color:#fff; animation:claimPulse 1.2s ease-in-out infinite;
     box-shadow:0 3px 14px rgba(16,185,129,0.3);
   }
+  .btn-task-claim:disabled { opacity:0.6; cursor:not-allowed; animation:none; }
   @keyframes claimPulse {
     0%,100%{box-shadow:0 3px 14px rgba(16,185,129,0.3)}
     50%{box-shadow:0 4px 22px rgba(16,185,129,0.6)}
@@ -441,7 +421,7 @@ const css = `
 
   /* ===================== WITHDRAW ===================== */
   .info-banner {
-    background:rgba(79,142,247,0.06); border:1px solid rgba(79,142,247,0.18);
+    background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.18);
     border-radius:var(--radius-sm); padding:14px 16px;
     display:flex; align-items:flex-start; gap:12px; margin-bottom:16px;
   }
@@ -454,9 +434,9 @@ const css = `
     width:100%; padding:15px 15px 15px 44px;
     background:var(--surface); border:1px solid var(--border2);
     border-radius:var(--radius-sm); color:var(--text); font-size:0.93rem;
-    font-weight:500; outline:none; transition:0.2s; font-family:'Inter',sans-serif;
+    font-weight:500; outline:none; transition:0.2s;
   }
-  .form-inp:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,92,231,0.1); }
+  .form-inp:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(124,58,237,0.1); }
   .form-inp::placeholder { color:var(--text-dim); opacity:0.8; }
   select.form-inp { appearance:none; cursor:pointer; }
   .btn-submit {
@@ -464,9 +444,9 @@ const css = `
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; font-size:0.97rem; font-weight:700; cursor:pointer;
     margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:0.2s; box-shadow:0 4px 20px rgba(108,92,231,0.3); font-family:'Inter',sans-serif;
+    transition:0.2s; box-shadow:0 4px 20px rgba(124,58,237,0.3);
   }
-  .btn-submit:active { transform:scale(0.98); opacity:0.9; }
+  .btn-submit:active:not(:disabled) { transform:scale(0.98); opacity:0.9; }
   .btn-submit:disabled { background:var(--surface2); box-shadow:none; cursor:not-allowed; color:var(--text-dim); }
   .btn-submit img { width:18px; height:18px; filter:brightness(10); }
 
@@ -500,7 +480,7 @@ const css = `
   .bottom-nav {
     position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
     width:calc(100% - 30px); max-width:420px;
-    background:rgba(14,14,28,0.88); border:1px solid var(--border2);
+    background:rgba(12,12,26,0.92); border:1px solid var(--border2);
     padding:6px 8px; border-radius:100px; display:flex; justify-content:space-around;
     z-index:100; box-shadow:0 12px 48px rgba(0,0,0,0.6);
     backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
@@ -515,7 +495,7 @@ const css = `
     filter:grayscale(1) brightness(0.35); transition:0.25s;
   }
   .nav-item span { font-size:0.59rem; font-weight:600; color:var(--text-dim); opacity:0; transition:0.2s; }
-  .nav-item.active { background:rgba(108,92,231,0.1); }
+  .nav-item.active { background:rgba(124,58,237,0.08); }
   .nav-item.active .nav-img { filter:none; transform:scale(1.1); }
   .nav-item.active span { opacity:1; color:var(--primary2); }
   .nav-dot {
@@ -535,8 +515,11 @@ const css = `
   ::-webkit-scrollbar-track { background:transparent; }
   ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
 
-  /* ===================== DIVIDER ===================== */
-  .divider { height:1px; background:var(--border); margin:4px 0 18px; }
+  /* ===================== UTILITY — fadeUp ===================== */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
 `;
 
 // ============================================================
@@ -556,8 +539,8 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 tg.expand();
-tg.setHeaderColor?.('#06060f');
-tg.setBackgroundColor?.('#06060f');
+tg.setHeaderColor?.('#05050e');
+tg.setBackgroundColor?.('#05050e');
 
 const INIT_DATA = tg.initData || '';
 
@@ -579,7 +562,7 @@ async function apiCall(action, method = 'GET', body = null) {
         const res = await fetch(url, opts);
         const data = await res.json();
         if (res.status === 401) {
-            showToastGlobal('error', 'Session expired. Please restart the app.');
+            showToastGlobal('error', 'সেশন শেষ হয়েছে। অ্যাপ পুনরায় চালু করুন।');
             return null;
         }
         return data;
@@ -589,34 +572,45 @@ async function apiCall(action, method = 'GET', body = null) {
 }
 
 // ============================================================
-//  Loader component — no Bengali text, no wallet image
+//  Loader — Premium Lightning SVG (No Text, No Progress)
 // ============================================================
-function Loader({ pct, hiding }) {
+function Loader({ hiding }) {
     return (
-        <div className="loader-overlay" style={hiding ? { opacity: 0, transform: 'scale(1.04)' } : {}}>
-            <div className="loader-mesh" />
-            <div className="loader-particle lp1" />
-            <div className="loader-particle lp2" />
-            <div className="loader-particle lp3" />
-            <div className="loader-inner">
-                <div className="loader-rings">
-                    <div className="lr-ring lr-ring-1" />
-                    <div className="lr-ring lr-ring-2" />
-                    <div className="lr-ring lr-ring-3" />
-                    <div className="lr-center">
-                        <img src={ICONS.coin} alt="" />
-                    </div>
-                </div>
-                <div className="loader-brand">Earn Wallet</div>
-                <div className="loader-progress-wrap">
-                    <div className="loader-bar-track">
-                        <div className="loader-bar-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <span className="loader-pct">{pct}%</span>
-                </div>
-                <div className="loader-dots">
-                    <div className="ld-dot" /><div className="ld-dot" /><div className="ld-dot" />
-                </div>
+        <div className="loader-overlay" style={hiding ? { opacity: 0, transform: 'scale(1.05)' } : {}}>
+            <div className="loader-bg-glow" />
+            <div className="loader-lightning-container">
+                {/* Lightning bolt SVG — pure CSS animated */}
+                <svg className="lightning-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#a78bfa" />
+                            <stop offset="50%" stopColor="#7c3aed" />
+                            <stop offset="100%" stopColor="#4f8ef7" />
+                        </linearGradient>
+                        <filter id="glowFilter" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <path d="M50 5 L20 55 L45 55 L35 95 L75 40 L50 40 L60 5 Z"
+                          fill="url(#boltGrad)"
+                          filter="url(#glowFilter)"
+                          stroke="rgba(167,139,250,0.3)"
+                          strokeWidth="1"
+                    />
+                    <path d="M50 10 L25 50 L45 50 L38 85 L68 40 L48 40 L56 10 Z"
+                          fill="rgba(255,255,255,0.15)"
+                    />
+                    <circle cx="50" cy="50" r="30" fill="rgba(124,58,237,0.1)" filter="blur(10px)" />
+                </svg>
+                <div className="spark spark1" />
+                <div className="spark spark2" />
+                <div className="spark spark3" />
+                <div className="spark spark4" />
+                <div className="spark spark5" />
             </div>
         </div>
     );
@@ -641,7 +635,7 @@ function Toast({ type, msg, show }) {
 }
 
 // ============================================================
-//  Home Page
+//  Home Page — Bangla
 // ============================================================
 function HomePage({ appState, onCopy, onShare }) {
     const u   = appState.user;
@@ -660,28 +654,28 @@ function HomePage({ appState, onCopy, onShare }) {
                     <div className="stat-icon-wrap blue">
                         <img src={ICONS.tv} alt="" />
                     </div>
-                    <p>Ads Watched</p>
+                    <p>বিজ্ঞাপন দেখা</p>
                     <h4>{totalAdViews}</h4>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon-wrap purple">
                         <img src={ICONS.share} alt="" />
                     </div>
-                    <p>Total Referrals</p>
+                    <p>মোট রেফারেল</p>
                     <h4>{u.referrals || 0}</h4>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon-wrap green">
                         <img src={ICONS.check} alt="" />
                     </div>
-                    <p>Tasks Completed</p>
+                    <p>টাস্ক সম্পন্ন</p>
                     <h4>{u.completedTaskCount || 0}</h4>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon-wrap orange">
                         <img src={ICONS.coin} alt="" />
                     </div>
-                    <p>Total Earned</p>
+                    <p>মোট আয়</p>
                     <h4>{(u.totalEarned || 0).toFixed(2)}</h4>
                 </div>
             </div>
@@ -692,22 +686,22 @@ function HomePage({ appState, onCopy, onShare }) {
                         <img src={ICONS.rocket} alt="" />
                     </div>
                     <div className="ref-title">
-                        <h4>Invite Friends</h4>
+                        <h4>বন্ধুদের আমন্ত্রণ জানান</h4>
                         <div className="ref-badge">
                             <img src={ICONS.gift} alt="" />
-                            Earn {refBonus} {sym} per referral!
+                            প্রতি রেফারেলে {refBonus} {sym} উপার্জন!
                         </div>
                     </div>
                 </div>
-                <div className="ref-label">Your Referral Link</div>
+                <div className="ref-label">আপনার রেফারেল লিংক</div>
                 <div className="ref-input-row">
                     <input className="ref-inp" readOnly value={refLink} onChange={() => {}} />
                     <button className="btn-copy" onClick={() => onCopy(refLink)}>
-                        <img src={ICONS.share} alt="" /> Copy
+                        <img src={ICONS.share} alt="" /> কপি
                     </button>
                 </div>
                 <button className="btn-share" onClick={() => onShare(refLink)}>
-                    <img src={ICONS.rocket} alt="" /> Share on Telegram
+                    <img src={ICONS.rocket} alt="" /> টেলিগ্রামে শেয়ার করুন
                 </button>
             </div>
         </div>
@@ -715,7 +709,7 @@ function HomePage({ appState, onCopy, onShare }) {
 }
 
 // ============================================================
-//  Earn Page
+//  Earn Page — Bangla
 // ============================================================
 function EarnPage({ appState, onAdDone, onTaskBegin }) {
     const cfg   = appState.config;
@@ -741,12 +735,12 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
     return (
         <div className="page active">
             <div className="sec-head">
-                <img src={ICONS.tv} alt="" /> Watch Ads & Earn
+                <img src={ICONS.tv} alt="" /> বিজ্ঞাপন দেখুন ও আয় করুন
             </div>
             {slots.length === 0 ? (
                 <div className="empty-state">
                     <img src={ICONS.tv} alt="" />
-                    No ads available right now.
+                    বর্তমানে কোনো বিজ্ঞাপন উপলব্ধ নেই।
                 </div>
             ) : (
                 <div className="ad-grid">
@@ -760,12 +754,12 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
                 </div>
             )}
             <div className="sec-head" style={{ marginTop: 28 }}>
-                <img src={ICONS.check} alt="" /> Special Tasks
+                <img src={ICONS.check} alt="" /> বিশেষ টাস্ক
             </div>
             {pendingTasks.length === 0 && completedTasks.length === 0 ? (
                 <div className="empty-state">
                     <img src={ICONS.chart} alt="" />
-                    No tasks available.
+                    কোনো টাস্ক উপলব্ধ নেই।
                 </div>
             ) : (
                 <div className="task-list">
@@ -780,14 +774,15 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
 }
 
 // ============================================================
-//  Ad Box
+//  Ad Box — Spam protection with lock
 // ============================================================
 function AdBox({ slot, index, done, limit, onAdDone }) {
     const [loading, setLoading] = useState(false);
-    const maxed = done >= limit;
+    const lockRef = useRef(false);
 
     async function triggerAd() {
-        if (loading || maxed) return;
+        if (loading || lockRef.current || done >= limit) return;
+        lockRef.current = true;
         setLoading(true);
         tg.HapticFeedback.impactOccurred('light');
         try {
@@ -797,8 +792,9 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             } else if (slot.network === 'gigapub' && window.showGiga) {
                 providerFunc = window.showGiga();
             } else {
-                alert('Ad network is loading. Please try again.');
+                alert('বিজ্ঞাপন নেটওয়ার্ক লোড হচ্ছে। আবার চেষ্টা করুন।');
                 setLoading(false);
+                lockRef.current = false;
                 return;
             }
             await providerFunc;
@@ -808,6 +804,7 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             // user cancelled
         } finally {
             setLoading(false);
+            lockRef.current = false;
         }
     }
 
@@ -816,15 +813,15 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             <div className="ad-icon">
                 <img src={ICONS.tv} alt="" />
             </div>
-            <h4>Ad {index + 1}</h4>
+            <h4>বিজ্ঞাপন {index + 1}</h4>
             <div className="ad-counter">{done}/{limit}</div>
-            <button className="ad-btn" onClick={triggerAd} disabled={maxed || loading}>
+            <button className="ad-btn" onClick={triggerAd} disabled={loading || lockRef.current || done >= limit}>
                 {loading ? (
-                    <>Loading...</>
-                ) : maxed ? (
-                    <><img src={ICONS.lock} alt="" /> Done</>
+                    <>লোডিং...</>
+                ) : done >= limit ? (
+                    <><img src={ICONS.lock} alt="" /> সম্পন্ন</>
                 ) : (
-                    <><img src={ICONS.bolt} alt="" /> Watch</>
+                    <><img src={ICONS.bolt} alt="" /> দেখুন</>
                 )}
             </button>
         </div>
@@ -832,12 +829,13 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
 }
 
 // ============================================================
-//  Task Item
+//  Task Item — 5 seconds wait, spam protection
 // ============================================================
 function TaskItem({ id, task, history, sym, now, onBegin }) {
-    const [state, setState]       = useState('idle');
-    const [countdown, setCountdown] = useState(15);
+    const [state, setState] = useState('idle');
+    const [countdown, setCountdown] = useState(5);
     const timerRef = useRef(null);
+    const lockRef = useRef(false);
 
     const isDailyDone = task.type === 'daily' && history.ts && (now - history.ts) < 86400000;
     const left = isDailyDone ? (86400000 - (now - history.ts)) : 0;
@@ -845,21 +843,30 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
     const mins = Math.floor((left % 3600000) / 60000);
 
     function handleStart() {
+        if (lockRef.current) return;
+        lockRef.current = true;
         tg.openLink(task.url);
         tg.HapticFeedback.impactOccurred('medium');
         setState('waiting');
-        let sec = 15;
+        let sec = 5;
         setCountdown(sec);
         timerRef.current = setInterval(() => {
             sec--;
             setCountdown(sec);
-            if (sec <= 0) { clearInterval(timerRef.current); setState('claim'); }
+            if (sec <= 0) {
+                clearInterval(timerRef.current);
+                setState('claim');
+                lockRef.current = false;
+            }
         }, 1000);
     }
 
     function handleClaim() {
+        if (lockRef.current) return;
+        lockRef.current = true;
         onBegin(id, task);
         setState('idle');
+        setTimeout(() => { lockRef.current = false; }, 500);
     }
 
     useEffect(() => () => clearInterval(timerRef.current), []);
@@ -886,21 +893,21 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
             </div>
             {isDailyDone ? (
                 <button className="btn-task btn-task-wait" disabled>
-                    <img src={ICONS.clock} alt="" style={{width:12,height:12}} /> {hrs}h {mins}m
+                    <img src={ICONS.clock} alt="" style={{width:12,height:12}} /> {hrs}ঘ {mins}মি
                 </button>
             ) : state === 'idle' ? (
-                <button className="btn-task btn-task-start" onClick={handleStart}>Start</button>
+                <button className="btn-task btn-task-start" onClick={handleStart} disabled={lockRef.current}>শুরু</button>
             ) : state === 'waiting' ? (
-                <button className="btn-task btn-task-wait" disabled>{countdown}s</button>
+                <button className="btn-task btn-task-wait" disabled>{countdown}সে</button>
             ) : (
-                <button className="btn-task btn-task-claim" onClick={handleClaim}>Claim!</button>
+                <button className="btn-task btn-task-claim" onClick={handleClaim} disabled={lockRef.current}>দাবি!</button>
             )}
         </div>
     );
 }
 
 // ============================================================
-//  Withdraw Page
+//  Withdraw Page — Bangla with spam protection
 // ============================================================
 function WithdrawPage({ appState, onWithdraw }) {
     const cfg    = appState.config;
@@ -913,11 +920,12 @@ function WithdrawPage({ appState, onWithdraw }) {
     const [account,    setAccount]    = useState('');
     const [amount,     setAmount]     = useState('');
     const [processing, setProcessing] = useState(false);
+    const lockRef = useRef(false);
 
     const selectedMethod = methods.find(m => m.name === method) || methods[0];
     const sysMin = parseFloat(selectedMethod?.min || 10);
 
-    const statusMap = { pending:'Pending', completed:'Completed', rejected:'Rejected' };
+    const statusMap = { pending:'অপেক্ষমান', completed:'সম্পন্ন', rejected:'বাতিল' };
     const histIcons = {
         completed: ICONS.check,
         rejected:  ICONS.bell,
@@ -930,76 +938,78 @@ function WithdrawPage({ appState, onWithdraw }) {
     };
 
     async function handleSubmit() {
-        if (processing) return;
+        if (processing || lockRef.current) return;
         if (u.referrals < minRef) {
-            showToastGlobal('warning', `Min ${minRef} referrals needed to withdraw.`);
+            showToastGlobal('warning', `উত্তোলনের জন্য ন্যূনতম ${minRef} রেফারেল প্রয়োজন।`);
             tg.HapticFeedback.notificationOccurred('warning');
             return;
         }
         const reqAmt = parseFloat(amount);
         if (!account || account.trim().length < 3) {
-            showToastGlobal('error', 'Enter a valid account number.'); return;
+            showToastGlobal('error', 'একটি বৈধ অ্যাকাউন্ট নম্বর দিন।'); return;
         }
         if (!reqAmt || isNaN(reqAmt) || reqAmt < sysMin) {
-            showToastGlobal('error', `Minimum withdrawal is ${sysMin} ${sym}.`);
+            showToastGlobal('error', `ন্যূনতম উত্তোলন ${sysMin} ${sym}।`);
             tg.HapticFeedback.notificationOccurred('error'); return;
         }
         if (reqAmt > u.balance) {
-            showToastGlobal('error', 'Insufficient balance.');
+            showToastGlobal('error', 'পর্যাপ্ত ব্যালেন্স নেই।');
             tg.HapticFeedback.notificationOccurred('error'); return;
         }
+        lockRef.current = true;
         setProcessing(true);
         const ok = await onWithdraw({ userId: u.id, userName: u.firstName, amount: reqAmt, method: method || selectedMethod?.name, account: account.trim() });
         setProcessing(false);
+        lockRef.current = false;
         if (ok) { setAmount(''); setAccount(''); }
     }
 
     return (
         <div className="page active">
             <div className="sec-head">
-                <img src={ICONS.withdraw} alt="" /> Withdraw
+                <img src={ICONS.withdraw} alt="" /> উত্তোলন
             </div>
             <div className="info-banner">
                 <img src={ICONS.bolt} alt="" />
                 <div>
                     <p>
-                        <strong>Minimum:</strong> {sysMin} {sym} &nbsp;|&nbsp;
-                        <strong>Min Referrals:</strong> {minRef}
+                        <strong>ন্যূনতম:</strong> {sysMin} {sym} &nbsp;|&nbsp;
+                        <strong>ন্যূনতম রেফারেল:</strong> {minRef}
                     </p>
                 </div>
             </div>
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.coin} alt="" />
                 <select className="form-inp" value={method} onChange={e => setMethod(e.target.value)}>
-                    {methods.length === 0 && <option value="">No methods available</option>}
+                    {methods.length === 0 && <option value="">কোন পদ্ধতি নেই</option>}
                     {methods.map(m => (
-                        <option key={m.name} value={m.name}>{m.name} (min {m.min})</option>
+                        <option key={m.name} value={m.name}>{m.name} (ন্যূনতম {m.min})</option>
                     ))}
                 </select>
             </div>
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.share} alt="" />
-                <input className="form-inp" placeholder="Account number / tag" value={account} onChange={e => setAccount(e.target.value)} />
+                <input className="form-inp" placeholder="অ্যাকাউন্ট নম্বর / ট্যাগ" value={account} onChange={e => setAccount(e.target.value)} />
             </div>
             <div className="input-wrap">
                 <img className="input-icon" src={ICONS.coin} alt="" />
-                <input className="form-inp" type="number" placeholder="Amount to withdraw" value={amount} onChange={e => setAmount(e.target.value)} />
+                <input className="form-inp" type="number" placeholder="উত্তোলনের পরিমাণ" value={amount} onChange={e => setAmount(e.target.value)} />
             </div>
-            <button className="btn-submit" onClick={handleSubmit} disabled={processing}>
+            <button className="btn-submit" onClick={handleSubmit} disabled={processing || lockRef.current}>
                 {processing
-                    ? <><img src={ICONS.clock} alt="" /> Processing...</>
-                    : <><img src={ICONS.withdraw} alt="" /> Request Payout</>
+                    ? <><img src={ICONS.clock} alt="" /> প্রক্রিয়াকরণ...</>
+                    : <><img src={ICONS.withdraw} alt="" /> উত্তোলন অনুরোধ</>
                 }
             </button>
 
             <div className="sec-head" style={{ marginTop: 34 }}>
-                <img src={ICONS.chart} alt="" /> Recent Transactions
+                <img src={ICONS.chart} alt="" /> সাম্প্রতিক লেনদেন
             </div>
             <div className="hist-wrap">
                 {(!appState.history || appState.history.length === 0) ? (
                     <div className="empty-state">
                         <img src={ICONS.chart} alt="" />
-                        No transactions yet.
+                        এখনো কোনো লেনদেন নেই।
                     </div>
                 ) : appState.history.map((d, idx) => {
                     const sl = d.status?.toLowerCase() || 'pending';
@@ -1013,7 +1023,7 @@ function WithdrawPage({ appState, onWithdraw }) {
                                 <div className="hist-info">
                                     <h4>{d.method}</h4>
                                     <small>
-                                        {dt.toLocaleDateString()} &middot; {dt.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
+                                        {dt.toLocaleDateString('bn-BD')} &middot; {dt.toLocaleTimeString('bn-BD', { hour:'2-digit', minute:'2-digit' })}
                                     </small>
                                 </div>
                             </div>
@@ -1041,7 +1051,6 @@ let showToastGlobal = () => {};
 export default function App() {
     const tgUser = tg.initDataUnsafe?.user || { id: 'Dev', first_name: 'User', photo_url: '' };
 
-    const [loaderPct,  setLoaderPct]  = useState(0);
     const [loaderHide, setLoaderHide] = useState(false);
     const [appReady,   setAppReady]   = useState(false);
     const [activePage, setActivePage] = useState('home');
@@ -1060,6 +1069,7 @@ export default function App() {
     });
 
     const toastTimer = useRef(null);
+    const navLock = useRef(false);
 
     const showToast = useCallback((type, msg) => {
         setToast({ show: true, type, msg });
@@ -1080,13 +1090,6 @@ export default function App() {
         if (cached) {
             try { setAppState(JSON.parse(cached)); } catch {}
         }
-
-        // Smooth progress animation
-        let pct = 0;
-        const ticker = setInterval(() => {
-            pct = Math.min(pct + 2, 88);
-            setLoaderPct(pct);
-        }, 60);
 
         (async () => {
             try {
@@ -1118,27 +1121,24 @@ export default function App() {
 
                 if (config?.adSlots) loadAdScripts(config.adSlots);
 
-                clearInterval(ticker);
-                setLoaderPct(100);
+                // Hide loader after a short delay for smooth transition
                 setTimeout(() => {
                     setLoaderHide(true);
-                    setTimeout(() => setAppReady(true), 480);
-                }, 420);
+                    setTimeout(() => setAppReady(true), 500);
+                }, 600);
 
             } catch {
-                clearInterval(ticker);
-                setLoaderPct(100);
                 setTimeout(() => {
                     setLoaderHide(true);
                     setTimeout(() => {
                         setAppReady(true);
-                        showToast('error', 'Connection failed. Running in offline mode.');
-                    }, 480);
-                }, 300);
+                        showToast('error', 'সংযোগ ব্যর্থ হয়েছে। অফলাইনে চলছে।');
+                    }, 500);
+                }, 600);
             }
         })();
 
-        return () => clearInterval(ticker);
+        return () => {};
     }, []); // eslint-disable-line
 
     function loadAdScripts(adSlots) {
@@ -1153,12 +1153,16 @@ export default function App() {
         });
     }
 
-    // ===== AD REWARD =====
+    // ===== AD REWARD — with spam protection =====
+    const adLock = useRef(false);
     async function handleAdDone(slotId) {
+        if (adLock.current) return;
+        adLock.current = true;
         const today = new Date().toISOString().slice(0, 10);
         const res = await apiCall('claimAdReward', 'POST', { slotId });
         if (!res || res.error) {
-            showToast('error', res?.error || 'Reward claim failed.');
+            showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
+            adLock.current = false;
             return;
         }
         const rwrd = res.reward;
@@ -1179,14 +1183,19 @@ export default function App() {
             saveLocal(next);
             return next;
         });
-        showToast('success', `+${rwrd} ${appState.config.currencySymbol || 'টাকা'} reward!`);
+        showToast('success', `+${rwrd} ${appState.config.currencySymbol || 'টাকা'} পুরস্কার!`);
+        adLock.current = false;
     }
 
-    // ===== TASK REWARD =====
+    // ===== TASK REWARD — with spam protection =====
+    const taskLock = useRef(false);
     async function handleTaskBegin(id) {
+        if (taskLock.current) return;
+        taskLock.current = true;
         const res = await apiCall('claimTaskReward', 'POST', { taskId: id });
         if (!res || res.error) {
-            showToast('error', res?.error || 'Reward claim failed.');
+            showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
+            taskLock.current = false;
             return;
         }
         const rwrd = res.reward;
@@ -1204,8 +1213,9 @@ export default function App() {
             saveLocal(next);
             return next;
         });
-        showToast('success', 'Task complete! Reward added.');
+        showToast('success', 'টাস্ক সম্পন্ন! পুরস্কার যোগ হয়েছে।');
         tg.HapticFeedback.notificationOccurred('success');
+        taskLock.current = false;
     }
 
     // ===== WITHDRAW =====
@@ -1221,18 +1231,18 @@ export default function App() {
             if (updtHist) {
                 setAppState(prev => { const n = { ...prev, history: updtHist }; saveLocal(n); return n; });
             }
-            showToast('success', 'Withdrawal request submitted!');
+            showToast('success', 'উত্তোলন অনুরোধ জমা দেওয়া হয়েছে!');
             tg.HapticFeedback.notificationOccurred('success');
             return true;
         } else {
-            showToast('error', rData?.message || 'Server error. Please try again.');
+            showToast('error', rData?.message || 'সার্ভার ত্রুটি। আবার চেষ্টা করুন।');
             return false;
         }
     }
 
     function handleCopy(link) {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(link).then(() => showToast('success', 'Link copied!'));
+            navigator.clipboard.writeText(link).then(() => showToast('success', 'লিংক কপি করা হয়েছে!'));
         } else {
             const tmp = document.createElement('input');
             tmp.value = link;
@@ -1240,21 +1250,23 @@ export default function App() {
             tmp.select();
             document.execCommand('copy');
             document.body.removeChild(tmp);
-            showToast('success', 'Link copied!');
+            showToast('success', 'লিংক কপি করা হয়েছে!');
         }
         tg.HapticFeedback.notificationOccurred('success');
     }
 
     function handleShare(link) {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Join now and start earning!')}`);
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('যোগ দিন এবং এখনই আয় শুরু করুন!')}`);
     }
 
     function openSupport() {
         if (appState.config.supportLink) tg.openLink(appState.config.supportLink);
-        else showToast('warning', 'Support link not configured.');
+        else showToast('warning', 'সাপোর্ট লিংক কনফিগার করা নেই।');
     }
 
     async function handleNav(page) {
+        if (navLock.current) return;
+        navLock.current = true;
         setActivePage(page);
         try { tg.HapticFeedback.impactOccurred('light'); } catch {}
         if (page === 'withdraw') {
@@ -1263,6 +1275,7 @@ export default function App() {
                 setAppState(prev => { const n = { ...prev, history: data }; saveLocal(n); return n; });
             }
         }
+        setTimeout(() => { navLock.current = false; }, 300);
     }
 
     const u   = appState.user;
@@ -1274,7 +1287,7 @@ export default function App() {
         <>
             <style>{css}</style>
 
-            {!appReady && <Loader pct={loaderPct} hiding={loaderHide} />}
+            {!appReady && <Loader hiding={loaderHide} />}
             <Toast type={toast.type} msg={toast.msg} show={toast.show} />
 
             {appReady && (
@@ -1284,43 +1297,43 @@ export default function App() {
                         <div className="user-pill">
                             <div className="user-avatar">
                                 <img
-                                    src={u.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.firstName||'U')}&background=6c5ce7&color=fff&size=88`}
+                                    src={u.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.firstName||'U')}&background=7c3aed&color=fff&size=88`}
                                     alt={u.firstName}
                                 />
                                 <div className="avatar-status" />
                             </div>
                             <div className="user-info">
                                 <h3>{u.firstName || tgUser.first_name}</h3>
-                                <p>ID: {u.id || tgUser.id}</p>
+                                <p>আইডি: {u.id || tgUser.id}</p>
                             </div>
                         </div>
-                        <button className="notif-btn" onClick={openSupport} aria-label="Support">
-                            <img src={ICONS.bell} alt="Support" />
+                        <button className="notif-btn" onClick={openSupport} aria-label="সাপোর্ট">
+                            <img src={ICONS.bell} alt="সাপোর্ট" />
                             <div className="notif-dot" />
                         </button>
                     </header>
 
-                    {/* Balance Card — only on home */}
+                    {/* Balance Card — only on home, Bright Purple Glow */}
                     {activePage === 'home' && (
                         <div className="balance-card">
                             <div className="bc-glow" />
                             <div className="bc-grid" />
-                            <div className="bc-label">Total Balance</div>
+                            <div className="bc-label">মোট ব্যালেন্স</div>
                             <div className="bc-amount">
                                 {(u.balance || 0).toFixed(2)}
                                 <span className="bc-sym"> {sym}</span>
                             </div>
                             <div className="bc-footer">
                                 <div className="bc-mini">
-                                    <span>Total Earned</span>
+                                    <span>মোট আয়</span>
                                     <span>{(u.totalEarned || 0).toFixed(2)}</span>
                                 </div>
                                 <div className="bc-mini">
-                                    <span>Referrals</span>
+                                    <span>রেফারেল</span>
                                     <span>{u.referrals || 0}</span>
                                 </div>
                                 <div className="bc-mini">
-                                    <span>Ads Watched</span>
+                                    <span>বিজ্ঞাপন দেখা</span>
                                     <span>{totalAdViews}</span>
                                 </div>
                             </div>
@@ -1334,12 +1347,12 @@ export default function App() {
                         {activePage === 'withdraw' && <WithdrawPage appState={appState} onWithdraw={handleWithdraw} />}
                     </main>
 
-                    {/* Bottom Nav — 3D Twemoji icons */}
-                    <nav className="bottom-nav" aria-label="Main navigation">
+                    {/* Bottom Nav — 3D Twemoji icons, Bangla labels */}
+                    <nav className="bottom-nav" aria-label="প্রধান নেভিগেশন">
                         {[
-                            { page:'home',     icon:ICONS.home,     label:'Home' },
-                            { page:'earn',     icon:ICONS.earn,     label:'Earn' },
-                            { page:'withdraw', icon:ICONS.withdraw, label:'Withdraw' },
+                            { page:'home',     icon:ICONS.home,     label:'হোম' },
+                            { page:'earn',     icon:ICONS.earn,     label:'আয়' },
+                            { page:'withdraw', icon:ICONS.withdraw, label:'উত্তোলন' },
                         ].map(({ page, icon, label }) => (
                             <div
                                 key={page}
