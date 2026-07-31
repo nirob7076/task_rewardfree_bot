@@ -42,7 +42,7 @@ const ICONS = {
 };
 
 // ============================================================
-//  GLOBAL CSS — Premium Modern Design
+//  GLOBAL CSS — Premium Modern Design (with loader progress)
 // ============================================================
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -80,10 +80,11 @@ const css = `
   body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; overflow-x:hidden; }
   #root { max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:100px; position:relative; }
 
-  /* ===================== LOADER — Premium Lightning Animation (No Text) ===================== */
+  /* ===================== LOADER — Premium Lightning + Progress Bar ===================== */
   .loader-overlay {
     position:fixed; inset:0; background:var(--bg); z-index:9999;
-    display:flex; justify-content:center; align-items:center;
+    display:flex; flex-direction:column;
+    justify-content:center; align-items:center;
     transition:opacity 0.6s ease, transform 0.6s ease;
   }
   .loader-bg-glow {
@@ -99,7 +100,6 @@ const css = `
     position:relative; z-index:2;
     display:flex; align-items:center; justify-content:center;
   }
-  /* Main lightning bolt made with SVG (no emoji) */
   .lightning-svg {
     width:120px; height:120px;
     filter: drop-shadow(0 0 40px rgba(124,58,237,0.8)) drop-shadow(0 0 80px rgba(79,142,247,0.4));
@@ -109,7 +109,7 @@ const css = `
     0% { transform: rotate(-5deg) scale(1); }
     100% { transform: rotate(5deg) scale(1.08); }
   }
-  /* Spark particles around lightning */
+  /* Spark particles */
   .spark {
     position:absolute; border-radius:50%;
     background: radial-gradient(circle, rgba(167,139,250,0.9), transparent 70%);
@@ -124,7 +124,36 @@ const css = `
     0% { transform:translate(0,0) scale(0.5); opacity:0.3; }
     100% { transform:translate(15px,-20px) scale(1.5); opacity:1; }
   }
-  /* No text, no progress bar, no percentage */
+
+  /* Loader Progress Bar – New */
+  .loader-progress-wrap {
+    position:relative; z-index:2;
+    margin-top:40px;
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    width:80%; max-width:260px;
+  }
+  .loader-progress-bar {
+    width:100%; height:6px;
+    background:rgba(255,255,255,0.07);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .loader-progress-fill {
+    height:100%;
+    background:linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
+    border-radius:10px;
+    transition:width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow:0 0 20px rgba(124,58,237,0.4);
+    width:0%;
+  }
+  .loader-progress-text {
+    font-size:0.9rem; font-weight:600;
+    color:var(--text-mid); letter-spacing:0.5px;
+  }
+  .loader-progress-text span {
+    color:#fff; font-weight:800;
+  }
 
   /* ===================== TOAST ===================== */
   .toast {
@@ -244,7 +273,7 @@ const css = `
   }
   .bc-mini span:last-child { font-size:0.95rem; color:#fff; font-weight:700; }
 
-  /* ===================== SECTION HEADING — Bangla ===================== */
+  /* ===================== SECTION HEADING ===================== */
   .sec-head {
     font-size:0.9rem; font-weight:700; margin:24px 0 14px;
     display:flex; align-items:center; gap:8px; color:var(--text);
@@ -252,7 +281,7 @@ const css = `
   }
   .sec-head img { width:18px; height:18px; }
 
-  /* ===================== STATS GRID — Jumping Cards ===================== */
+  /* ===================== STATS GRID ===================== */
   .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
   .stat-card {
     background:var(--surface); border:1px solid var(--border);
@@ -572,14 +601,14 @@ async function apiCall(action, method = 'GET', body = null) {
 }
 
 // ============================================================
-//  Loader — Premium Lightning SVG (No Text, No Progress)
+//  Loader — Premium Lightning + Progress Bar (No Text except progress)
 // ============================================================
-function Loader({ hiding }) {
+function Loader({ hiding, progress }) {
     return (
         <div className="loader-overlay" style={hiding ? { opacity: 0, transform: 'scale(1.05)' } : {}}>
             <div className="loader-bg-glow" />
             <div className="loader-lightning-container">
-                {/* Lightning bolt SVG — pure CSS animated */}
+                {/* Lightning bolt SVG */}
                 <svg className="lightning-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -612,6 +641,14 @@ function Loader({ hiding }) {
                 <div className="spark spark4" />
                 <div className="spark spark5" />
             </div>
+
+            {/* Progress Bar */}
+            <div className="loader-progress-wrap">
+                <div className="loader-progress-bar">
+                    <div className="loader-progress-fill" style={{ width: `${Math.min(progress, 100)}%` }} />
+                </div>
+                <div className="loader-progress-text">লোডিং... <span>{Math.min(progress, 100)}%</span></div>
+            </div>
         </div>
     );
 }
@@ -635,7 +672,7 @@ function Toast({ type, msg, show }) {
 }
 
 // ============================================================
-//  Home Page — Bangla
+//  Home Page
 // ============================================================
 function HomePage({ appState, onCopy, onShare }) {
     const u   = appState.user;
@@ -709,7 +746,7 @@ function HomePage({ appState, onCopy, onShare }) {
 }
 
 // ============================================================
-//  Earn Page — Bangla
+//  Earn Page
 // ============================================================
 function EarnPage({ appState, onAdDone, onTaskBegin }) {
     const cfg   = appState.config;
@@ -774,7 +811,7 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
 }
 
 // ============================================================
-//  Ad Box — Spam protection with lock
+//  Ad Box
 // ============================================================
 function AdBox({ slot, index, done, limit, onAdDone }) {
     const [loading, setLoading] = useState(false);
@@ -829,7 +866,7 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
 }
 
 // ============================================================
-//  Task Item — 5 seconds wait, spam protection
+//  Task Item
 // ============================================================
 function TaskItem({ id, task, history, sym, now, onBegin }) {
     const [state, setState] = useState('idle');
@@ -907,7 +944,7 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
 }
 
 // ============================================================
-//  Withdraw Page — Bangla with spam protection
+//  Withdraw Page
 // ============================================================
 function WithdrawPage({ appState, onWithdraw }) {
     const cfg    = appState.config;
@@ -1055,6 +1092,7 @@ export default function App() {
     const [appReady,   setAppReady]   = useState(false);
     const [activePage, setActivePage] = useState('home');
     const [toast,      setToast]      = useState({ show: false, type: 'success', msg: '' });
+    const [loadingProgress, setLoadingProgress] = useState(0);
     const [appState,   setAppState]   = useState({
         user: {
             id: tgUser.id,
@@ -1084,7 +1122,7 @@ export default function App() {
         try { localStorage.setItem(`app_${state.user.id}`, JSON.stringify(state)); } catch {}
     }
 
-    // ===== INIT =====
+    // ===== INIT with progress tracking =====
     useEffect(() => {
         const cached = localStorage.getItem(`app_${tgUser.id}`);
         if (cached) {
@@ -1093,16 +1131,21 @@ export default function App() {
 
         (async () => {
             try {
-                const [config, user] = await Promise.all([
-                    apiCall('getConfig'),
-                    apiCall('login', 'POST', {
-                        id:        tgUser.id,
-                        firstName: tgUser.first_name,
-                        photoUrl:  tgUser.photo_url || '',
-                        refId:     tg.initDataUnsafe?.start_param || '',
-                    }),
-                ]);
+                setLoadingProgress(5);
+
+                const config = await apiCall('getConfig');
+                setLoadingProgress(35);
+
+                const user = await apiCall('login', 'POST', {
+                    id:        tgUser.id,
+                    firstName: tgUser.first_name,
+                    photoUrl:  tgUser.photo_url || '',
+                    refId:     tg.initDataUnsafe?.start_param || '',
+                });
+                setLoadingProgress(65);
+
                 const hist = await apiCall('getHistory', 'POST', { id: tgUser.id });
+                setLoadingProgress(95);
 
                 setAppState(prev => {
                     const next = {
@@ -1121,20 +1164,22 @@ export default function App() {
 
                 if (config?.adSlots) loadAdScripts(config.adSlots);
 
-                // Hide loader after a short delay for smooth transition
+                // Show 100% and then hide loader
+                setLoadingProgress(100);
                 setTimeout(() => {
                     setLoaderHide(true);
                     setTimeout(() => setAppReady(true), 500);
-                }, 600);
+                }, 400);
 
             } catch {
+                setLoadingProgress(100);
                 setTimeout(() => {
                     setLoaderHide(true);
                     setTimeout(() => {
                         setAppReady(true);
                         showToast('error', 'সংযোগ ব্যর্থ হয়েছে। অফলাইনে চলছে।');
                     }, 500);
-                }, 600);
+                }, 400);
             }
         })();
 
@@ -1153,7 +1198,7 @@ export default function App() {
         });
     }
 
-    // ===== AD REWARD — with spam protection =====
+    // ===== AD REWARD =====
     const adLock = useRef(false);
     async function handleAdDone(slotId) {
         if (adLock.current) return;
@@ -1187,7 +1232,7 @@ export default function App() {
         adLock.current = false;
     }
 
-    // ===== TASK REWARD — with spam protection =====
+    // ===== TASK REWARD =====
     const taskLock = useRef(false);
     async function handleTaskBegin(id) {
         if (taskLock.current) return;
@@ -1287,7 +1332,7 @@ export default function App() {
         <>
             <style>{css}</style>
 
-            {!appReady && <Loader hiding={loaderHide} />}
+            {!appReady && <Loader hiding={loaderHide} progress={loadingProgress} />}
             <Toast type={toast.type} msg={toast.msg} show={toast.show} />
 
             {appReady && (
@@ -1313,7 +1358,7 @@ export default function App() {
                         </button>
                     </header>
 
-                    {/* Balance Card — only on home, Bright Purple Glow */}
+                    {/* Balance Card — only on home */}
                     {activePage === 'home' && (
                         <div className="balance-card">
                             <div className="bc-glow" />
@@ -1347,7 +1392,7 @@ export default function App() {
                         {activePage === 'withdraw' && <WithdrawPage appState={appState} onWithdraw={handleWithdraw} />}
                     </main>
 
-                    {/* Bottom Nav — 3D Twemoji icons, Bangla labels */}
+                    {/* Bottom Nav */}
                     <nav className="bottom-nav" aria-label="প্রধান নেভিগেশন">
                         {[
                             { page:'home',     icon:ICONS.home,     label:'হোম' },
