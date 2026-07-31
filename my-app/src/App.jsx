@@ -14,7 +14,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ============================================================
 //  CONFIG
 // ============================================================
-const API_URL = "https://www.gajarbotol.site/nirob/api.php"; // Replace with your .php URL
+const API_URL = "https://yoursite.com/api.php"; // Replace with your api.php URL
 
 // ============================================================
 //  3D Twemoji icon URLs — high quality
@@ -68,8 +68,8 @@ const css = `
     --radius-lg: 24px;
     --radius-md: 16px;
     --radius-sm: 12px;
-    --glow-purple: 0 0 50px rgba(124,58,237,0.4);
-    --glow-purple-strong: 0 0 80px rgba(124,58,237,0.6);
+    --glow-purple: 0 0 40px rgba(124,58,237,0.3);
+    --glow-purple-strong: 0 0 60px rgba(124,58,237,0.5);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -77,30 +77,33 @@ const css = `
   body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; overflow-x:hidden; }
   #root { max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:100px; position:relative; }
 
-  /* ===================== LOADER — Lightning Theme (No Text) ===================== */
+  /* ===================== LOADER — Lightning Theme ===================== */
   .loader-overlay {
     position:fixed; inset:0; background:var(--bg); z-index:9999;
     display:flex; justify-content:center; align-items:center; flex-direction:column;
     overflow:hidden; transition:opacity 0.55s ease, transform 0.55s ease;
   }
+  /* Dark mesh background with purple/blue hints */
   .loader-mesh {
     position:absolute; inset:0; z-index:0;
-    background: radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.18) 0%, transparent 55%),
-                radial-gradient(ellipse at 70% 80%, rgba(79,142,247,0.12) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.06) 0%, transparent 40%);
+    background: radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.15) 0%, transparent 55%),
+                radial-gradient(ellipse at 70% 80%, rgba(79,142,247,0.10) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.05) 0%, transparent 40%);
     animation: meshPulse 6s ease-in-out infinite alternate;
   }
   @keyframes meshPulse {
     0% { opacity:0.6; transform:scale(1); }
     100% { opacity:1; transform:scale(1.05); }
   }
+  /* Lightning bolt container */
   .loader-lightning-wrap {
     position:relative; z-index:2; display:flex; flex-direction:column;
     align-items:center; justify-content:center;
   }
+  /* Glow rings around lightning */
   .lightning-ring {
     position:absolute; border-radius:50%;
-    border:1.5px solid rgba(124,58,237,0.10);
+    border:1.5px solid rgba(124,58,237,0.08);
     animation: ringExpand 3s ease-out infinite;
   }
   .lr1 { width:160px; height:160px; animation-delay:0s; }
@@ -110,19 +113,21 @@ const css = `
     0% { transform:scale(0.6); opacity:0.5; }
     100% { transform:scale(1.4); opacity:0; }
   }
+  /* Lightning bolt icon with glow */
   .lightning-icon {
     position:relative; z-index:3; width:80px; height:80px;
-    filter: drop-shadow(0 0 40px rgba(124,58,237,0.7)) drop-shadow(0 0 80px rgba(79,142,247,0.4));
+    filter: drop-shadow(0 0 30px rgba(124,58,237,0.6)) drop-shadow(0 0 60px rgba(79,142,247,0.3));
     animation: lightningPulse 1.8s ease-in-out infinite alternate;
   }
   .lightning-icon img {
     width:100%; height:100%; object-fit:contain;
-    filter: brightness(1.3) saturate(1.4);
+    filter: brightness(1.2) saturate(1.3);
   }
   @keyframes lightningPulse {
-    0% { transform:scale(1) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(124,58,237,0.5)); }
-    100% { transform:scale(1.15) rotate(3deg); filter: drop-shadow(0 0 80px rgba(124,58,237,0.9)) drop-shadow(0 0 120px rgba(79,142,247,0.5)); }
+    0% { transform:scale(1) rotate(-2deg); filter: drop-shadow(0 0 30px rgba(124,58,237,0.4)); }
+    100% { transform:scale(1.12) rotate(2deg); filter: drop-shadow(0 0 60px rgba(124,58,237,0.8)) drop-shadow(0 0 100px rgba(79,142,247,0.4)); }
   }
+  /* Lightning bolt sparkle particles */
   .sparkle {
     position:absolute; border-radius:50%; pointer-events:none;
     background: radial-gradient(circle, rgba(167,139,250,0.8), transparent 70%);
@@ -136,6 +141,7 @@ const css = `
     0% { opacity:0; transform:scale(0.5); }
     100% { opacity:1; transform:scale(1.8); }
   }
+  /* Tiny bolt particles floating around */
   .bolt-particle {
     position:absolute; border-radius:50%; pointer-events:none;
     background: rgba(167,139,250,0.15); filter:blur(4px);
@@ -148,6 +154,7 @@ const css = `
     0%,100% { transform:translate(0,0) scale(1); opacity:0.3; }
     50% { transform:translate(15px,-20px) scale(1.3); opacity:0.6; }
   }
+  /* No text on loader — hidden */
 
   /* ===================== TOAST ===================== */
   .toast {
@@ -175,11 +182,11 @@ const css = `
   .user-avatar img {
     width:44px; height:44px; border-radius:50%;
     border:2px solid var(--primary); object-fit:cover;
-    box-shadow:0 0 0 3px rgba(124,58,237,0.25), 0 0 25px rgba(124,58,237,0.15);
+    box-shadow:0 0 0 3px rgba(124,58,237,0.2), 0 0 20px rgba(124,58,237,0.1);
     transition:box-shadow 0.3s;
   }
   .user-avatar img:hover {
-    box-shadow:0 0 0 4px rgba(124,58,237,0.35), 0 0 40px rgba(124,58,237,0.25);
+    box-shadow:0 0 0 4px rgba(124,58,237,0.3), 0 0 30px rgba(124,58,237,0.2);
   }
   .avatar-status {
     position:absolute; bottom:1px; right:1px; width:12px; height:12px;
@@ -221,19 +228,19 @@ const css = `
     to   { opacity:1; transform:translateY(0) scale(1); }
   }
 
-  /* ===================== BALANCE CARD — Bright Purple Glow ===================== */
+  /* ===================== BALANCE CARD — Purple Glow ===================== */
   .balance-card {
     margin: 0 16px 20px;
     background: linear-gradient(145deg, #0d0d2b 0%, #1a0a3a 30%, #0a1a3a 70%, #0d0d2b 100%);
-    border:1px solid rgba(124,58,237,0.45);
+    border:1px solid rgba(124,58,237,0.35);
     border-radius:var(--radius-lg); padding:28px 24px 24px;
     position:relative; overflow:hidden;
-    box-shadow: var(--glow-purple), 0 0 0 1px rgba(124,58,237,0.15) inset;
+    box-shadow: var(--glow-purple), 0 0 0 1px rgba(124,58,237,0.08) inset;
     animation: cardGlowIn 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
     transition:box-shadow 0.5s;
   }
   .balance-card:hover {
-    box-shadow: var(--glow-purple-strong), 0 0 0 1px rgba(124,58,237,0.25) inset;
+    box-shadow: var(--glow-purple-strong), 0 0 0 1px rgba(124,58,237,0.15) inset;
   }
   @keyframes cardGlowIn {
     from { transform:scale(0.88) translateY(20px); opacity:0; box-shadow:0 0 0 rgba(124,58,237,0); }
@@ -241,9 +248,9 @@ const css = `
   }
   .bc-glow {
     position:absolute; inset:0; pointer-events:none;
-    background: radial-gradient(ellipse at 20% 10%, rgba(124,58,237,0.30) 0%, transparent 55%),
-                radial-gradient(ellipse at 80% 90%, rgba(79,142,247,0.20) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.08) 0%, transparent 40%);
+    background: radial-gradient(ellipse at 20% 10%, rgba(124,58,237,0.20) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 90%, rgba(79,142,247,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.05) 0%, transparent 40%);
     animation: glowDrift 6s ease-in-out infinite alternate;
   }
   @keyframes glowDrift {
@@ -252,30 +259,30 @@ const css = `
   }
   .bc-grid {
     position:absolute; inset:0; pointer-events:none;
-    background-image: linear-gradient(rgba(124,58,237,0.05) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(124,58,237,0.05) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
     background-size: 30px 30px;
     opacity:0.5;
   }
   .bc-label {
     font-size:0.68rem; text-transform:uppercase; letter-spacing:2.5px;
-    color:rgba(167,139,250,0.7); font-weight:700; margin-bottom:10px;
+    color:rgba(167,139,250,0.6); font-weight:700; margin-bottom:10px;
     position:relative; z-index:1;
     font-family:'Inter',sans-serif;
   }
   .bc-amount {
     font-size:3rem; font-weight:800; color:#fff; letter-spacing:-2px; line-height:1;
     position:relative; z-index:1;
-    text-shadow:0 0 50px rgba(124,58,237,0.25);
+    text-shadow:0 0 40px rgba(124,58,237,0.15);
     font-family:'Inter',sans-serif;
   }
   .bc-sym { font-size:1.3rem; font-weight:600; opacity:0.7; letter-spacing:0; }
   .bc-footer {
     display:flex; gap:20px; margin-top:22px; position:relative; z-index:1;
-    padding-top:16px; border-top:1px solid rgba(124,58,237,0.2);
+    padding-top:16px; border-top:1px solid rgba(124,58,237,0.15);
   }
   .bc-mini span:first-child {
-    font-size:0.65rem; color:rgba(167,139,250,0.6); font-weight:600; display:block;
+    font-size:0.65rem; color:rgba(167,139,250,0.5); font-weight:600; display:block;
     font-family:'Inter',sans-serif;
   }
   .bc-mini span:last-child {
@@ -386,7 +393,6 @@ const css = `
   }
   .btn-copy img { width:14px; height:14px; filter:brightness(10); }
   .btn-copy:active { transform:scale(0.93); opacity:0.85; }
-  .btn-copy:disabled { opacity:0.6; cursor:not-allowed; }
   .btn-share {
     width:100%; padding:14px; border:none; border-radius:var(--radius-sm);
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
@@ -397,7 +403,6 @@ const css = `
   }
   .btn-share img { width:18px; height:18px; filter:brightness(10); }
   .btn-share:active { transform:scale(0.97); opacity:0.9; }
-  .btn-share:disabled { opacity:0.6; cursor:not-allowed; }
 
   /* ===================== ADS ===================== */
   .ad-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -434,7 +439,7 @@ const css = `
     font-family:'Inter',sans-serif;
   }
   .ad-btn img { width:14px; height:14px; filter:brightness(10); }
-  .ad-btn:active:not(:disabled) { transform:scale(0.96); opacity:0.85; }
+  .ad-btn:active { transform:scale(0.96); opacity:0.85; }
   .ad-btn:disabled {
     background:var(--surface2); color:var(--text-dim); cursor:not-allowed;
     border:1px solid var(--border); box-shadow:none;
@@ -472,14 +477,12 @@ const css = `
     background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
     color:#fff; box-shadow:0 3px 12px rgba(124,58,237,0.22);
   }
-  .btn-task-start:disabled { opacity:0.6; cursor:not-allowed; }
   .btn-task-wait { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; border:1px solid var(--border); }
   .btn-task-claim {
     background: linear-gradient(135deg, var(--green), #059669);
     color:#fff; animation:claimPulse 1.2s ease-in-out infinite;
     box-shadow:0 3px 14px rgba(16,185,129,0.3);
   }
-  .btn-task-claim:disabled { opacity:0.6; cursor:not-allowed; animation:none; }
   @keyframes claimPulse {
     0%,100%{box-shadow:0 3px 14px rgba(16,185,129,0.3)}
     50%{box-shadow:0 4px 22px rgba(16,185,129,0.6)}
@@ -516,7 +519,7 @@ const css = `
     transition:0.2s; box-shadow:0 4px 20px rgba(124,58,237,0.3);
     font-family:'Inter',sans-serif;
   }
-  .btn-submit:active:not(:disabled) { transform:scale(0.98); opacity:0.9; }
+  .btn-submit:active { transform:scale(0.98); opacity:0.9; }
   .btn-submit:disabled { background:var(--surface2); box-shadow:none; cursor:not-allowed; color:var(--text-dim); }
   .btn-submit img { width:18px; height:18px; filter:brightness(10); }
 
@@ -562,7 +565,7 @@ const css = `
   .bottom-nav {
     position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
     width:calc(100% - 30px); max-width:420px;
-    background:rgba(12,12,26,0.92); border:1px solid var(--border2);
+    background:rgba(12,12,26,0.90); border:1px solid var(--border2);
     padding:6px 8px; border-radius:100px; display:flex; justify-content:space-around;
     z-index:100; box-shadow:0 12px 48px rgba(0,0,0,0.6);
     backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
@@ -663,7 +666,7 @@ async function apiCall(action, method = 'GET', body = null) {
 }
 
 // ============================================================
-//  Loader — Lightning theme, NO TEXT
+//  Loader — Lightning theme, NO TEXT (Bangla or English)
 // ============================================================
 function Loader({ pct, hiding }) {
     return (
@@ -684,6 +687,7 @@ function Loader({ pct, hiding }) {
                 <div className="sparkle sp3" />
                 <div className="sparkle sp4" />
             </div>
+            {/* No text — no brand, no percentage, no dots */}
         </div>
     );
 }
@@ -846,19 +850,15 @@ function EarnPage({ appState, onAdDone, onTaskBegin }) {
 }
 
 // ============================================================
-//  Ad Box — Bangla with Debounce/Spam protection
+//  Ad Box — Bangla
 // ============================================================
 function AdBox({ slot, index, done, limit, onAdDone }) {
     const [loading, setLoading] = useState(false);
-    const [clicked, setClicked] = useState(false);
     const maxed = done >= limit;
-    const clickLock = useRef(false);
 
     async function triggerAd() {
-        if (loading || maxed || clickLock.current) return;
-        clickLock.current = true;
+        if (loading || maxed) return;
         setLoading(true);
-        setClicked(true);
         tg.HapticFeedback.impactOccurred('light');
         try {
             let providerFunc;
@@ -869,8 +869,6 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             } else {
                 alert('বিজ্ঞাপন নেটওয়ার্ক লোড হচ্ছে। আবার চেষ্টা করুন।');
                 setLoading(false);
-                setClicked(false);
-                clickLock.current = false;
                 return;
             }
             await providerFunc;
@@ -880,8 +878,6 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             // user cancelled
         } finally {
             setLoading(false);
-            setClicked(false);
-            clickLock.current = false;
         }
     }
 
@@ -892,7 +888,7 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
             </div>
             <h4>বিজ্ঞাপন {index + 1}</h4>
             <div className="ad-counter">{done}/{limit}</div>
-            <button className="ad-btn" onClick={triggerAd} disabled={maxed || loading || clicked}>
+            <button className="ad-btn" onClick={triggerAd} disabled={maxed || loading}>
                 {loading ? (
                     <>লোডিং...</>
                 ) : maxed ? (
@@ -906,13 +902,12 @@ function AdBox({ slot, index, done, limit, onAdDone }) {
 }
 
 // ============================================================
-//  Task Item — Bangla, Wait time reduced to 5 seconds
+//  Task Item — Bangla
 // ============================================================
 function TaskItem({ id, task, history, sym, now, onBegin }) {
     const [state, setState]       = useState('idle');
-    const [countdown, setCountdown] = useState(5); // Changed from 15 to 5
+    const [countdown, setCountdown] = useState(15);
     const timerRef = useRef(null);
-    const clickLock = useRef(false);
 
     const isDailyDone = task.type === 'daily' && history.ts && (now - history.ts) < 86400000;
     const left = isDailyDone ? (86400000 - (now - history.ts)) : 0;
@@ -920,31 +915,21 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
     const mins = Math.floor((left % 3600000) / 60000);
 
     function handleStart() {
-        if (clickLock.current) return;
-        clickLock.current = true;
         tg.openLink(task.url);
         tg.HapticFeedback.impactOccurred('medium');
         setState('waiting');
-        let sec = 5; // Changed from 15 to 5
+        let sec = 15;
         setCountdown(sec);
         timerRef.current = setInterval(() => {
             sec--;
             setCountdown(sec);
-            if (sec <= 0) {
-                clearInterval(timerRef.current);
-                setState('claim');
-                clickLock.current = false;
-            }
+            if (sec <= 0) { clearInterval(timerRef.current); setState('claim'); }
         }, 1000);
     }
 
     function handleClaim() {
-        if (clickLock.current) return;
-        clickLock.current = true;
         onBegin(id, task);
         setState('idle');
-        // Release lock after a short delay to prevent double-click
-        setTimeout(() => { clickLock.current = false; }, 500);
     }
 
     useEffect(() => () => clearInterval(timerRef.current), []);
@@ -974,18 +959,18 @@ function TaskItem({ id, task, history, sym, now, onBegin }) {
                     <img src={ICONS.clock} alt="" style={{width:12,height:12}} /> {hrs}ঘ {mins}মি
                 </button>
             ) : state === 'idle' ? (
-                <button className="btn-task btn-task-start" onClick={handleStart} disabled={clickLock.current}>শুরু</button>
+                <button className="btn-task btn-task-start" onClick={handleStart}>শুরু</button>
             ) : state === 'waiting' ? (
                 <button className="btn-task btn-task-wait" disabled>{countdown}সে</button>
             ) : (
-                <button className="btn-task btn-task-claim" onClick={handleClaim} disabled={clickLock.current}>দাবি!</button>
+                <button className="btn-task btn-task-claim" onClick={handleClaim}>দাবি!</button>
             )}
         </div>
     );
 }
 
 // ============================================================
-//  Withdraw Page — Bangla with Spam protection
+//  Withdraw Page — Bangla
 // ============================================================
 function WithdrawPage({ appState, onWithdraw }) {
     const cfg    = appState.config;
@@ -998,7 +983,6 @@ function WithdrawPage({ appState, onWithdraw }) {
     const [account,    setAccount]    = useState('');
     const [amount,     setAmount]     = useState('');
     const [processing, setProcessing] = useState(false);
-    const clickLock = useRef(false);
 
     const selectedMethod = methods.find(m => m.name === method) || methods[0];
     const sysMin = parseFloat(selectedMethod?.min || 10);
@@ -1016,7 +1000,7 @@ function WithdrawPage({ appState, onWithdraw }) {
     };
 
     async function handleSubmit() {
-        if (processing || clickLock.current) return;
+        if (processing) return;
         if (u.referrals < minRef) {
             showToastGlobal('warning', `উত্তোলনের জন্য ন্যূনতম ${minRef} রেফারেল প্রয়োজন।`);
             tg.HapticFeedback.notificationOccurred('warning');
@@ -1034,11 +1018,9 @@ function WithdrawPage({ appState, onWithdraw }) {
             showToastGlobal('error', 'পর্যাপ্ত ব্যালেন্স নেই।');
             tg.HapticFeedback.notificationOccurred('error'); return;
         }
-        clickLock.current = true;
         setProcessing(true);
         const ok = await onWithdraw({ userId: u.id, userName: u.firstName, amount: reqAmt, method: method || selectedMethod?.name, account: account.trim() });
         setProcessing(false);
-        clickLock.current = false;
         if (ok) { setAmount(''); setAccount(''); }
     }
 
@@ -1073,7 +1055,7 @@ function WithdrawPage({ appState, onWithdraw }) {
                 <img className="input-icon" src={ICONS.coin} alt="" />
                 <input className="form-inp" type="number" placeholder="উত্তোলনের পরিমাণ" value={amount} onChange={e => setAmount(e.target.value)} />
             </div>
-            <button className="btn-submit" onClick={handleSubmit} disabled={processing || clickLock.current}>
+            <button className="btn-submit" onClick={handleSubmit} disabled={processing}>
                 {processing
                     ? <><img src={ICONS.clock} alt="" /> প্রক্রিয়াকরণ...</>
                     : <><img src={ICONS.withdraw} alt="" /> উত্তোলন অনুরোধ</>
@@ -1148,7 +1130,6 @@ export default function App() {
     });
 
     const toastTimer = useRef(null);
-    const navLock = useRef(false);
 
     const showToast = useCallback((type, msg) => {
         setToast({ show: true, type, msg });
@@ -1170,6 +1151,7 @@ export default function App() {
             try { setAppState(JSON.parse(cached)); } catch {}
         }
 
+        // Smooth progress animation — just for visual, no text shown
         let pct = 0;
         const ticker = setInterval(() => {
             pct = Math.min(pct + 2, 88);
@@ -1241,16 +1223,12 @@ export default function App() {
         });
     }
 
-    // ===== AD REWARD — with spam protection =====
-    const adLock = useRef(false);
+    // ===== AD REWARD =====
     async function handleAdDone(slotId) {
-        if (adLock.current) return;
-        adLock.current = true;
         const today = new Date().toISOString().slice(0, 10);
         const res = await apiCall('claimAdReward', 'POST', { slotId });
         if (!res || res.error) {
             showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
-            adLock.current = false;
             return;
         }
         const rwrd = res.reward;
@@ -1272,18 +1250,13 @@ export default function App() {
             return next;
         });
         showToast('success', `+${rwrd} ${appState.config.currencySymbol || 'টাকা'} পুরস্কার!`);
-        adLock.current = false;
     }
 
-    // ===== TASK REWARD — with spam protection =====
-    const taskLock = useRef(false);
+    // ===== TASK REWARD =====
     async function handleTaskBegin(id) {
-        if (taskLock.current) return;
-        taskLock.current = true;
         const res = await apiCall('claimTaskReward', 'POST', { taskId: id });
         if (!res || res.error) {
             showToast('error', res?.error || 'পুরস্কার দাবি ব্যর্থ হয়েছে।');
-            taskLock.current = false;
             return;
         }
         const rwrd = res.reward;
@@ -1303,10 +1276,9 @@ export default function App() {
         });
         showToast('success', 'টাস্ক সম্পন্ন! পুরস্কার যোগ হয়েছে।');
         tg.HapticFeedback.notificationOccurred('success');
-        taskLock.current = false;
     }
 
-    // ===== WITHDRAW — with spam protection (already in WithdrawPage) =====
+    // ===== WITHDRAW =====
     async function handleWithdraw(payload) {
         const rData = await apiCall('withdraw', 'POST', payload);
         if (rData?.success) {
@@ -1353,8 +1325,6 @@ export default function App() {
     }
 
     async function handleNav(page) {
-        if (navLock.current) return;
-        navLock.current = true;
         setActivePage(page);
         try { tg.HapticFeedback.impactOccurred('light'); } catch {}
         if (page === 'withdraw') {
@@ -1363,7 +1333,6 @@ export default function App() {
                 setAppState(prev => { const n = { ...prev, history: data }; saveLocal(n); return n; });
             }
         }
-        setTimeout(() => { navLock.current = false; }, 300);
     }
 
     const u   = appState.user;
@@ -1401,7 +1370,7 @@ export default function App() {
                         </button>
                     </header>
 
-                    {/* Balance Card — only on home, Bright Purple Glow */}
+                    {/* Balance Card — only on home, Purple Glow */}
                     {activePage === 'home' && (
                         <div className="balance-card">
                             <div className="bc-glow" />
